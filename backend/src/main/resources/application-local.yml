@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+logging:
+  level:
+    root: INFO
+    com.cooker: DEBUG
+

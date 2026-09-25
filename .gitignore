@@ -1,0 +1,35 @@
+# 操作系统与 IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# 本地环境与密钥
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Java / Maven
+backend/target/
+backend/maven-repository/
+*.class
+*.jar
+*.log
+
+# Node.js / Vue
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/*.local
+frontend/*.tsbuildinfo
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# 数据目录
+.data/

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+    <mirrors>
+        <!--
+          仅对本项目生效，避免本机全局 settings.xml 中遗留的 HTTP 镜像
+          导致依赖下载失败。这里不保存任何仓库凭据。
+        -->
+        <mirror>
+            <!-- 保持与本机既有缓存仓库 ID 一致，但强制改用 HTTPS 地址。 -->
+            <id>alimaven</id>
+            <name>Aliyun Maven Public HTTPS Mirror</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <mirrorOf>*</mirrorOf>
+        </mirror>
+    </mirrors>
+</settings>

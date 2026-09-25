@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+logging:
+  level:
+    root: INFO
+    com.cooker: INFO
+

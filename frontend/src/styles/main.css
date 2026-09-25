@@ -1,0 +1,54 @@
+:root {
+  font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
+  color: #20231f;
+  background: #f5f6f2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.placeholder {
+  max-width: 640px;
+  padding: 32px;
+  border: 1px solid #d9ddd3;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.placeholder h1 {
+  margin: 8px 0 12px;
+}
+
+.placeholder p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.eyebrow {
+  color: #60705c;
+  font-weight: 600;
+}
+

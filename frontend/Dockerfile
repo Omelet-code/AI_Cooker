@@ -1,0 +1,13 @@
+FROM node:24-alpine AS builder
+WORKDIR /workspace
+
+COPY frontend/package*.json ./
+RUN npm install
+
+COPY frontend/ .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /workspace/dist /usr/share/nginx/html
+COPY infra/nginx/default.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80

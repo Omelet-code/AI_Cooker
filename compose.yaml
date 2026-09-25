@@ -1,0 +1,55 @@
+name: cooker
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    container_name: cooker-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cooker}
+      POSTGRES_USER: ${POSTGRES_USER:-cooker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - cooker-postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cooker} -d ${POSTGRES_DB:-cooker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    profiles: ["app"]
+    build:
+      context: ./backend
+    container_name: cooker-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-cooker}
+      DB_USERNAME: ${POSTGRES_USER:-cooker}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      LLM_CREDENTIAL_MASTER_KEY: ${LLM_CREDENTIAL_MASTER_KEY:-}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: cooker-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - backend
+
+volumes:
+  cooker-postgres-data:
