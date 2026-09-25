@@ -15,7 +15,7 @@ Cooker 是一个家庭烹饪单 Agent。用户通过自然语言表达饮食需�
 
 MVP 截止日期：2026-10-05。
 
-当前阶段：**阶段 0 已完成项目骨架，业务功能尚未实现。**
+当前阶段：**阶段 1 架构与任务契约已冻结，等待实现会话执行，业务功能尚未实现。**
 
 ## 3. 已冻结的产品约束
 
@@ -252,21 +252,20 @@ src/
 
 ## 13. 当前阶段限制
 
-阶段 0 只允许：
+阶段 1 只允许按照 `docs/阶段1-菜谱数据与混合检索架构.md` 中的 T1～T6 任务卡实现：
 
-- 建立目录和构建配置；
-- 编写文档和 ADR；
-- 准备 PostgreSQL、Nginx 与 Docker Compose 骨架；
-- 创建无业务功能的启动入口和前端占位页。
+- HowToCook 固定快照的数据模型、解析、导入与诊断；
+- 百炼 Embedding Provider、检索索引生命周期；
+- 结构化过滤、pg_trgm、pgvector、RRF 和检索评测；
+- 与上述范围直接相关的迁移、配置、测试和文档。
 
-阶段 0 禁止：
+阶段 1 禁止：
 
-- 实现注册登录；
-- 建立业务表；
-- 导入 HowToCook；
-- 调用 DeepSeek 或百炼；
-- 实现检索、库存、购物或对话业务；
-- 引入 Spring Cloud、Nacos、RabbitMQ、Redis、Elasticsearch 或 Kubernetes。
+- 实现注册登录、用户库存、购物、对话 Agent 或前端业务页面；
+- 调用 DeepSeek；
+- 用户上传自定义菜谱；
+- 引入 Spring AI、Spring Cloud、Nacos、RabbitMQ、Redis、Elasticsearch 或 Kubernetes；
+- 未经主架构会话批准修改冻结的 DTO、迁移顺序、Embedding 模型和维度、RRF 公式。
 
 ## 14. 常用命令
 
