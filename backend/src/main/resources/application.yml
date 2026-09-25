@@ -33,3 +33,10 @@ management:
     health:
       show-details: never
 
+# 菜谱快照必须由 recipe-import profile 显式触发；此处不提供数据集路径默认值，
+# 避免普通应用启动意外读取开发机文件系统。
+cooker:
+  recipe-import:
+    enabled: false
+    source-version: ${COOKER_RECIPE_IMPORT_SOURCE_VERSION:1.6.0-a0b14bd}
+

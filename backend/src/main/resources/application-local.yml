@@ -6,5 +6,6 @@ spring:
 logging:
   level:
     root: INFO
-    com.cooker: DEBUG
+    # 原始 Markdown 属于不可信外部输入，不能因 Mapper 调试日志而完整落盘。
+    com.cooker: INFO
 

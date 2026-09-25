@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: recipe-import
+
+cooker:
+  recipe-import:
+    # 必须由 --cooker.recipe-import.dataset-path 或同名环境变量传入。
+    enabled: ${COOKER_RECIPE_IMPORT_ENABLED:false}
