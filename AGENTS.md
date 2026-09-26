@@ -15,7 +15,7 @@ Cooker 是一个家庭烹饪单 Agent。用户通过自然语言表达饮食需�
 
 MVP 截止日期：2026-10-05。
 
-当前阶段：**阶段 1 已获限量授权：仅开发 HowToCook 原始数据与结构化数据的一次性 PostgreSQL 导入；向量化与检索仍未授权。**
+当前阶段：**阶段 1 的 T1～T4 已实现并验证：HowToCook 原始与结构化数据一次性导入、chunk 化检索投影与百炼向量化；T5 混合检索与 T6 评测仍未授权。**
 
 ## 3. 已冻结的产品约束
 
@@ -256,27 +256,29 @@ src/
 
 ## 13. 当前阶段限制
 
-当前阶段只允许一个独立实现会话合并完成阶段 1 的 T1～T3 数据导入切片：
+阶段 1 已由独立实现会话完成 T1～T4 切片，其实现范围与验收基线如下：
 
 - 使用只读数据目录 `E:\数据集\dishes`，扫描时排除 `template` 目录；
 - 建立原始文档和结构化菜谱所需的 Flyway、Entity、Mapper、Service 与测试；
 - 实现可配置数据路径的 HowToCook 兼容 Markdown 解析器；
 - 实现显式触发的一次性初始化导入和失败重试幂等；
 - 完善业务代码中文注释，重点解释解析规则、事务边界、幂等策略和异常隔离；
-- 在 PostgreSQL 可用时执行迁移和实际导入，并输出导入统计。
+- 在 PostgreSQL 可用时执行迁移和实际导入，并输出导入统计；
+- 按结构化事实拼接 `overview`、`ingredients`、`steps`、`tools` 四类 chunk，并用百炼 `text-embedding-v4` 生成 1024 维向量；
+- 检索投影记录内容哈希、模板版本、模型与维度，未变化时不重复调用收费接口。
 
 当前阶段禁止：
 
 - 将 `E:\数据集\dishes` 硬编码进业务代码或修改数据集文件；
-- 实现 Embedding、pgvector 写入、词法检索、混合检索或 RRF；
+- 实现词法检索、混合检索、RRF 或面向用户的检索 API；
 - 实现用户自定义菜谱上传接口；
-- 调用 DeepSeek 或百炼；
+- 调用 DeepSeek；或在 `recipe-index` 显式任务之外新增百炼调用；
 - 实现库存、购物、对话、认证或前端业务功能；
-- 引入 Spring AI、Spring Cloud、Nacos、RabbitMQ、Redis、Elasticsearch 或 Kubernetes；
+- 引入 Spring Cloud、Nacos、RabbitMQ、Redis、Elasticsearch 或 Kubernetes；T4 仅批准引入 `spring-ai-model` 的 `EmbeddingModel` 抽象，不得引入 VectorStore、ChatClient、TextSplitter 或 Agent 能力；
 - 在普通应用启动时自动执行导入，或实现 HowToCook 上游同步；
-- 派发或执行 T4～T6。
+- 派发或执行 T5～T6。
 
-T1～T3 的数据导入契约已作为当前实现基线；T4～T6 仍是未来草案，只有用户再次明确批准后才能派发。
+T1～T4 的导入与索引契约已作为当前实现基线；T5～T6 仍是未来草案，只有用户再次明确批准后才能派发。
 
 ## 14. 常用命令
 

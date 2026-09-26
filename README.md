@@ -2,7 +2,7 @@
 
 Cooker 是一个面向家庭烹饪场景的单 Agent 项目。用户通过自然语言描述饮食需求，系统从 HowToCook 菜谱中进行混合检索，并结合家庭食材库存生成菜谱推荐、缺货清单和商品购买入口。
 
-当前状态：**阶段 0——项目骨架已建立，尚未实现业务功能。**
+当前状态：**阶段 1 已完成 HowToCook 原始数据、结构化事实和 chunk 化检索投影向量化；检索接口与 RRF 融合待后续实现。**
 
 ## 目录
 
@@ -49,6 +49,24 @@ docker compose up -d postgres
 Set-Location backend
 mvn spring-boot:run
 ```
+
+## 显式构建检索投影
+
+PostgreSQL 必须使用项目的 Docker Compose 镜像：它在 `pgvector` 基础上额外构建了中文分词扩展 `zhparser`。先导入 HowToCook 结构化数据，再在环境变量中提供百炼 Key，最后执行以下一次性索引任务；普通后端启动不会调用百炼。
+
+```powershell
+Set-Location backend
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+$env:DB_URL = 'jdbc:postgresql://localhost:5432/cooker'
+$env:DB_USERNAME = 'root'
+$env:DB_PASSWORD = 'root'
+$env:DASHSCOPE_API_KEY = '<仅在当前终端设置的百炼 Key>'
+$env:COOKER_RETRIEVAL_INDEX_ENABLED = 'true'
+mvn spring-boot:run "-Dspring-boot.run.profiles=local,recipe-index" "-Dspring-boot.run.arguments=--spring.main.web-application-type=none"
+```
+
+索引命令按 `content_hash`、Embedding 模型、维度和模板版本跳过未变化的块；失败块保留可重试状态。不要把真实 Key 写入 `.env.example`、配置文件或 Git。
 
 启动前端：
 
