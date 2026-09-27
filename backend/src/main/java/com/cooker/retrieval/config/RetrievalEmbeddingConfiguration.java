@@ -4,7 +4,6 @@ import com.cooker.retrieval.service.impl.DashScopeEmbeddingModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -18,7 +17,6 @@ import org.springframework.web.client.RestClient;
 @Configuration(proxyBeanMethods = false)
 @Profile("recipe-index")
 @ConditionalOnProperty(prefix = "cooker.retrieval.index", name = "enabled", havingValue = "true")
-@EnableConfigurationProperties(RetrievalIndexProperties.class)
 public class RetrievalEmbeddingConfiguration {
     /**
      * 创建文档侧 EmbeddingModel；缺少 Key 或 endpoint 时直接失败，避免发出无意义的远程调用。

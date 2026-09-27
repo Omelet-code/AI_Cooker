@@ -48,7 +48,7 @@ public final class DashScopeEmbeddingModel implements EmbeddingModel {
         List<Embedding> allEmbeddings = new ArrayList<>();
         for (int offset = 0; offset < texts.size(); offset += MAX_BATCH_SIZE) {
             List<String> batch = texts.subList(offset, Math.min(offset + MAX_BATCH_SIZE, texts.size()));
-            allEmbeddings.addAll(callBatch(batch, offset));
+            allEmbeddings.addAll(callBatch(batch, offset, "document"));
         }
         allEmbeddings.sort(Comparator.comparing(Embedding::getIndex));
         return new EmbeddingResponse(List.copyOf(allEmbeddings));
@@ -68,13 +68,19 @@ public final class DashScopeEmbeddingModel implements EmbeddingModel {
         return properties.getEmbeddingDimension();
     }
 
+    /** 查询向量使用百炼 query 模式，不能复用入库文档的 document 模式。 */
+    public float[] embedQuery(String query) {
+        if (!StringUtils.hasText(query)) throw new IllegalArgumentException("查询文本不能为空");
+        return callBatch(List.of(query), 0, "query").getFirst().getOutput();
+    }
+
     /**
      * 调用一次百炼原生 Embedding 接口。
      *
      * @param texts  本批待向量化文本
      * @param offset 本批文本在整体列表中的起始下标，用于还原全局索引顺序
      */
-    private List<Embedding> callBatch(List<String> texts, int offset) {
+    private List<Embedding> callBatch(List<String> texts, int offset, String textType) {
         if (texts.stream().anyMatch(text -> !StringUtils.hasText(text))) {
             throw new IllegalArgumentException("待向量化文本不能为空");
         }
@@ -82,7 +88,7 @@ public final class DashScopeEmbeddingModel implements EmbeddingModel {
                 "model", properties.getEmbeddingModel(),
                 "input", Map.of("texts", texts),
                 "parameters", Map.of(
-                        "text_type", "document",
+                        "text_type", textType,
                         "dimension", properties.getEmbeddingDimension(),
                         "output_type", "dense"));
         try {

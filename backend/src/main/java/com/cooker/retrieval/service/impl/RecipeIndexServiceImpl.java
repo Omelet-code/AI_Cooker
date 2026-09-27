@@ -69,8 +69,16 @@ public class RecipeIndexServiceImpl implements RecipeIndexService {
     private RecipeIndexOutcome rebuildRecipe(RecipeIndexProjection projection) {
         List<RecipeSearchDocumentChunk> chunks = documentBuilder.build(projection);
         Map<String, RecipeSearchDocumentEntity> existing = existingByKey(projection.recipeId());
-        List<RecipeSearchDocumentChunk> pending = chunks.stream()
-                .filter(chunk -> !isCurrent(existing.get(chunk.key()), chunk)).toList();
+        List<RecipeSearchDocumentChunk> pending = new ArrayList<>();
+        for (RecipeSearchDocumentChunk chunk : chunks) {
+            RecipeSearchDocumentEntity old = existing.get(chunk.key());
+            if (isCurrent(old, chunk)) continue;
+            if (sameVector(old, chunk)) {
+                documentMapper.refreshMetadata(toEntity(chunk));
+                continue;
+            }
+            pending.add(chunk);
+        }
         int indexed = 0;
         int failed = 0;
         for (int offset = 0; offset < pending.size(); offset += properties.getBatchSize()) {
@@ -116,9 +124,17 @@ public class RecipeIndexServiceImpl implements RecipeIndexService {
 
     /**
      * 判断某个块是否已有可直接复用的向量。
-     * 只有状态为 READY，且内容哈希、模板版本、模型与维度四项全部一致才算未过期。
+     * 内容向量和权限来源元数据均一致才算未变化。
      */
     private boolean isCurrent(RecipeSearchDocumentEntity existing, RecipeSearchDocumentChunk chunk) {
+        return sameVector(existing, chunk)
+                && chunk.sourceDocumentId().equals(existing.sourceDocumentId)
+                && chunk.sourceType().equals(existing.sourceType)
+                && java.util.Objects.equals(chunk.ownerUserId(), existing.ownerUserId)
+                && chunk.visibility().equals(existing.visibility);
+    }
+
+    private boolean sameVector(RecipeSearchDocumentEntity existing, RecipeSearchDocumentChunk chunk) {
         return existing != null && "READY".equals(existing.embeddingStatus)
                 && chunk.contentHash().equals(existing.contentHash)
                 && properties.getDocumentTemplateVersion() == existing.documentTemplateVersion

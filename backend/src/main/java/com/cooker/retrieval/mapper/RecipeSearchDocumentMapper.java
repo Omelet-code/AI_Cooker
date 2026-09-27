@@ -60,6 +60,20 @@ public interface RecipeSearchDocumentMapper {
     int upsertReady(@Param("document") RecipeSearchDocumentEntity document,
             @Param("embeddingLiteral") String embeddingLiteral);
 
+    /** 内容向量仍有效时仅刷新权限与来源，不产生新的收费请求。 */
+    @org.apache.ibatis.annotations.Update("""
+            UPDATE recipe_search_document SET source_document_id = #{document.sourceDocumentId},
+                source_type = #{document.sourceType}, owner_user_id = #{document.ownerUserId},
+                visibility = #{document.visibility}, updated_at = CURRENT_TIMESTAMP
+            WHERE recipe_id = #{document.recipeId} AND chunk_type = #{document.chunkType}
+              AND chunk_no = #{document.chunkNo} AND embedding_status = 'READY'
+              AND content_hash = #{document.contentHash}
+              AND document_template_version = #{document.documentTemplateVersion}
+              AND embedding_model = #{document.embeddingModel}
+              AND embedding_dimension = #{document.embeddingDimension}
+            """)
+    int refreshMetadata(@Param("document") RecipeSearchDocumentEntity document);
+
     @Insert("""
             INSERT INTO recipe_search_document (
                 recipe_id, source_document_id, source_type, owner_user_id, visibility, chunk_type, chunk_no,

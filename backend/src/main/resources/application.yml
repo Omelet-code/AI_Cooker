@@ -36,6 +36,13 @@ management:
 # 菜谱快照必须由 recipe-import profile 显式触发；此处不提供数据集路径默认值，
 # 避免普通应用启动意外读取开发机文件系统。
 cooker:
+  retrieval:
+    index:
+      document-template-version: ${COOKER_RETRIEVAL_INDEX_DOCUMENT_TEMPLATE_VERSION:1}
+      embedding-model: ${COOKER_RETRIEVAL_EMBEDDING_MODEL:text-embedding-v4}
+      embedding-dimension: ${COOKER_RETRIEVAL_EMBEDDING_DIMENSION:1024}
+      endpoint: ${COOKER_RETRIEVAL_DASHSCOPE_ENDPOINT:https://dashscope.aliyuncs.com/api/v1/services/embeddings/text-embedding/text-embedding}
+      api-key: ${DASHSCOPE_API_KEY:}
   recipe-import:
     enabled: false
     source-version: ${COOKER_RECIPE_IMPORT_SOURCE_VERSION:1.6.0-a0b14bd}

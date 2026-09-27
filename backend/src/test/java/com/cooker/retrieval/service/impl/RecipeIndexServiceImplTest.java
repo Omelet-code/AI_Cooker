@@ -86,12 +86,54 @@ class RecipeIndexServiceImplTest {
         RecipeSearchDocumentEntity entity = new RecipeSearchDocumentEntity();
         entity.chunkType = chunk.chunkType();
         entity.chunkNo = chunk.chunkNo();
+        entity.sourceDocumentId = chunk.sourceDocumentId();
+        entity.sourceType = chunk.sourceType();
+        entity.ownerUserId = chunk.ownerUserId();
+        entity.visibility = chunk.visibility();
         entity.contentHash = chunk.contentHash();
         entity.documentTemplateVersion = properties.getDocumentTemplateVersion();
         entity.embeddingModel = properties.getEmbeddingModel();
         entity.embeddingDimension = properties.getEmbeddingDimension();
         entity.embeddingStatus = "READY";
         return entity;
+    }
+
+    @Test
+    void 权限元数据改变只刷新记录不重复调用模型() {
+        RetrievalIndexProperties properties = properties();
+        RecipeSearchDocumentBuilder builder = new RecipeSearchDocumentBuilder(properties);
+        RecipeIndexProjection original = RecipeSearchDocumentBuilderTest.projection(List.of("第一步", "第二步", "第三步"));
+        RecipeIndexProjection changed = new RecipeIndexProjection(original.recipeId(), original.sourceDocumentId() + 1,
+                "USER_CUSTOM", 42L, "PRIVATE", original.name(), original.categoryCode(), original.summary(),
+                original.difficulty(), original.estimatedMinutes(), original.servings(), original.caloriesKcal(),
+                original.ingredientNames(), original.toolNames(), original.steps());
+        when(projectionService.listCurrentRecipes()).thenReturn(List.of(changed));
+        when(documentMapper.findByRecipeId(11L)).thenReturn(builder.build(original).stream()
+                .map(chunk -> readyDocument(chunk, properties)).toList());
+        service(properties, builder).rebuildAll();
+        verify(documentMapper, org.mockito.Mockito.times(4)).refreshMetadata(any());
+        verify(embeddingModel, never()).embed(anyList());
+    }
+
+    @Test
+    void 私有菜谱所有者变化也只刷新元数据() {
+        RetrievalIndexProperties properties = properties();
+        RecipeSearchDocumentBuilder builder = new RecipeSearchDocumentBuilder(properties);
+        RecipeIndexProjection base = RecipeSearchDocumentBuilderTest.projection(List.of("第一步", "第二步", "第三步"));
+        RecipeIndexProjection original = new RecipeIndexProjection(base.recipeId(), base.sourceDocumentId(),
+                "USER_CUSTOM", 42L, "PRIVATE", base.name(), base.categoryCode(), base.summary(),
+                base.difficulty(), base.estimatedMinutes(), base.servings(), base.caloriesKcal(),
+                base.ingredientNames(), base.toolNames(), base.steps());
+        RecipeIndexProjection changed = new RecipeIndexProjection(base.recipeId(), base.sourceDocumentId(),
+                "USER_CUSTOM", 43L, "PRIVATE", base.name(), base.categoryCode(), base.summary(),
+                base.difficulty(), base.estimatedMinutes(), base.servings(), base.caloriesKcal(),
+                base.ingredientNames(), base.toolNames(), base.steps());
+        when(projectionService.listCurrentRecipes()).thenReturn(List.of(changed));
+        when(documentMapper.findByRecipeId(11L)).thenReturn(builder.build(original).stream()
+                .map(chunk -> readyDocument(chunk, properties)).toList());
+        service(properties, builder).rebuildAll();
+        verify(documentMapper, org.mockito.Mockito.times(4)).refreshMetadata(any());
+        verify(embeddingModel, never()).embed(anyList());
     }
 
     /** 维度必须与配置一致，否则会被判定为 Provider 返回异常。 */

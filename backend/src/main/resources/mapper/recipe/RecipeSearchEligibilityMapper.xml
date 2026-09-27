@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.recipe.mapper.RecipeSearchEligibilityMapper">
+  <resultMap id="eligibility" type="com.cooker.recipe.dto.RecipeSearchEligibility">
+    <constructor>
+      <idArg column="recipe_id" javaType="java.lang.Long"/>
+      <arg column="name" javaType="java.lang.String"/>
+      <arg column="source_document_id" javaType="java.lang.Long"/>
+      <arg column="matched_ingredients" javaType="java.util.List" typeHandler="com.cooker.recipe.mapper.StringArrayListTypeHandler"/>
+    </constructor>
+  </resultMap>
+  <select id="findEligible" resultMap="eligibility">
+    SELECT r.id AS recipe_id, r.name, r.source_document_id,
+      ARRAY(SELECT DISTINCT COALESCE(i.canonical_name, ri.raw_name)
+            FROM recipe_ingredient ri LEFT JOIN ingredient i ON i.id = ri.ingredient_id
+            WHERE ri.recipe_id = r.id AND (LOWER(i.canonical_name) = LOWER(#{filter.query})
+              OR LOWER(ri.raw_name) = LOWER(#{filter.query})
+              OR EXISTS (SELECT 1 FROM ingredient_alias ia WHERE ia.ingredient_id = ri.ingredient_id
+                         AND LOWER(ia.alias_name) = LOWER(#{filter.query})))) AS matched_ingredients
+    FROM recipe r JOIN recipe_source s ON s.id = r.source_id
+    WHERE ((s.source_type = 'SYSTEM_HOWTOCOOK' AND s.owner_user_id IS NULL AND s.visibility = 'PUBLIC')
+       OR (s.source_type = 'USER_CUSTOM' AND s.visibility = 'PRIVATE' AND s.owner_user_id = #{filter.viewerUserId}))
+    <if test="filter.categoryCodes != null and !filter.categoryCodes.isEmpty()">
+      AND r.category_code IN <foreach collection="filter.categoryCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+    </if>
+    <if test="filter.maxCookingMinutes != null">
+      AND (r.estimated_minutes &lt;= #{filter.maxCookingMinutes}
+        <if test="filter.includeUnknownCookingTime">OR r.estimated_minutes IS NULL</if>)
+    </if>
+    <if test="filter.availableToolNames != null">
+      AND NOT EXISTS (SELECT 1 FROM recipe_tool rt JOIN cooking_tool ct ON ct.id = rt.tool_id
+                      WHERE rt.recipe_id = r.id AND rt.optional = FALSE
+      <choose>
+        <when test="!filter.availableToolNames.isEmpty()">
+          AND LOWER(ct.canonical_name) NOT IN
+          <foreach collection="filter.availableToolNames" item="tool" open="(" separator="," close=")">LOWER(#{tool})</foreach>
+        </when>
+        <otherwise>AND TRUE</otherwise>
+      </choose>)
+    </if>
+    <if test="filter.excludedIngredientNames != null and !filter.excludedIngredientNames.isEmpty()">
+      AND NOT EXISTS (SELECT 1 FROM recipe_ingredient ri LEFT JOIN ingredient i ON i.id = ri.ingredient_id
+                      WHERE ri.recipe_id = r.id AND (
+        <foreach collection="filter.excludedIngredientNames" item="excluded" separator=" OR ">
+          LOWER(i.canonical_name) = LOWER(#{excluded}) OR LOWER(ri.raw_name) = LOWER(#{excluded})
+          OR EXISTS (SELECT 1 FROM ingredient_alias ia WHERE ia.ingredient_id = ri.ingredient_id
+                     AND LOWER(ia.alias_name) = LOWER(#{excluded}))
+        </foreach>))
+    </if>
+    ORDER BY r.id
+  </select>
+</mapper>

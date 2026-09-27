@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.retrieval.mapper.RecipeSearchMapper">
+  <resultMap id="candidate" type="com.cooker.retrieval.dto.RecipeSearchCandidate">
+    <constructor>
+      <idArg column="recipe_id" javaType="java.lang.Long"/>
+      <arg column="match_tier" javaType="java.lang.Integer"/>
+      <arg column="lexical_score" javaType="java.lang.Double"/>
+      <arg column="distance" javaType="java.lang.Double"/>
+    </constructor>
+  </resultMap>
+  <sql id="eligible">
+    WITH eligible(recipe_id, source_document_id, name, ingredient_exact) AS (
+      VALUES <foreach collection="eligible" item="item" separator=",">
+        (CAST(#{item.recipeId} AS bigint), CAST(#{item.sourceDocumentId} AS bigint),
+         CAST(#{item.name} AS text),
+         <choose><when test="item.matchedIngredients != null and !item.matchedIngredients.isEmpty()">TRUE</when><otherwise>FALSE</otherwise></choose>)
+      </foreach>
+    )
+  </sql>
+  <sql id="gate">
+    d.recipe_id = e.recipe_id AND d.source_document_id = e.source_document_id
+    AND d.embedding_status = 'READY' AND d.embedding_model = #{model}
+    AND d.embedding_dimension = #{dimension} AND d.document_template_version = #{templateVersion}
+    AND ((d.source_type = 'SYSTEM_HOWTOCOOK' AND d.owner_user_id IS NULL AND d.visibility = 'PUBLIC')
+      OR (d.source_type = 'USER_CUSTOM' AND d.visibility = 'PRIVATE' AND d.owner_user_id = #{viewerUserId}))
+  </sql>
+  <select id="lexical" resultMap="candidate">
+    <include refid="eligible"/>, scored AS (
+      SELECT d.recipe_id, d.id AS chunk_id,
+        CASE WHEN LOWER(e.name) = LOWER(#{query}) THEN 0
+             WHEN e.ingredient_exact THEN 1
+             WHEN d.tsv @@ plainto_tsquery('cooker_zh'::regconfig, #{query}) THEN 2
+             ELSE 3 END AS match_tier,
+        CASE WHEN d.tsv @@ plainto_tsquery('cooker_zh'::regconfig, #{query})
+             THEN ts_rank(d.tsv, plainto_tsquery('cooker_zh'::regconfig, #{query}))::double precision
+             ELSE similarity(e.name, #{query})::double precision END AS lexical_score
+      FROM recipe_search_document d JOIN eligible e ON <include refid="gate"/>
+      WHERE LOWER(e.name) = LOWER(#{query}) OR e.ingredient_exact
+         OR d.tsv @@ plainto_tsquery('cooker_zh'::regconfig, #{query})
+         OR similarity(e.name, #{query}) &gt;= 0.25
+         OR (#{shortQuery} AND position(LOWER(#{query}) IN LOWER(e.name)) &gt; 0)
+    ), best AS (
+      SELECT *, row_number() OVER (PARTITION BY recipe_id ORDER BY match_tier, lexical_score DESC, chunk_id) AS chunk_rank
+      FROM scored
+    )
+    SELECT recipe_id, match_tier, lexical_score, NULL::double precision AS distance
+    FROM best WHERE chunk_rank = 1
+    ORDER BY match_tier, lexical_score DESC, recipe_id LIMIT 30
+  </select>
+  <select id="vector" resultMap="candidate">
+    <include refid="eligible"/>, scored AS (
+      SELECT d.recipe_id, d.id AS chunk_id,
+             (d.embedding &lt;=&gt; CAST(#{vector} AS vector))::double precision AS distance
+      FROM recipe_search_document d JOIN eligible e ON <include refid="gate"/>
+      WHERE d.embedding IS NOT NULL
+    ), best AS (
+      SELECT *, row_number() OVER (PARTITION BY recipe_id ORDER BY distance, chunk_id) AS chunk_rank
+      FROM scored
+    )
+    SELECT recipe_id, NULL::integer AS match_tier, NULL::double precision AS lexical_score, distance
+    FROM best WHERE chunk_rank = 1
+    ORDER BY distance, recipe_id LIMIT 30
+  </select>
+</mapper>
