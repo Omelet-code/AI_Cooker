@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.recipe.mapper.RecipeReadMapper">
+    <resultMap id="card" type="com.cooker.recipe.dto.RecipeCardRow">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="categoryCode" column="category_code"/>
+        <result property="summary" column="summary"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="estimatedMinutes" column="estimated_minutes"/>
+        <result property="isFavorite" column="is_favorite"/>
+        <result property="servings" column="servings"/>
+        <result property="additionalContent" column="additional_content"/>
+    </resultMap>
+    <sql id="visible">
+        ((s.source_type = 'SYSTEM_HOWTOCOOK' AND s.visibility = 'PUBLIC' AND s.owner_user_id IS NULL)
+         OR (s.source_type = 'USER_CUSTOM' AND s.visibility = 'PRIVATE' AND s.owner_user_id = #{userId}))
+    </sql>
+    <sql id="keyword">
+        <if test="keyword != null">
+            AND r.name LIKE ('%' || #{keyword} || '%') ESCAPE '\'
+        </if>
+    </sql>
+    <sql id="cardColumns">
+        r.id, r.name, r.category_code, r.summary, r.difficulty, r.estimated_minutes,
+        (f.recipe_id IS NOT NULL) AS is_favorite
+    </sql>
+    <select id="countVisible" resultType="long">
+        SELECT count(*) FROM recipe r
+        JOIN recipe_source s ON s.id = r.source_id
+        WHERE <include refid="visible"/>
+        <include refid="keyword"/>
+    </select>
+    <select id="listVisible" resultMap="card">
+        SELECT <include refid="cardColumns"/>
+        FROM recipe r
+        JOIN recipe_source s ON s.id = r.source_id
+        LEFT JOIN favorite_recipe f ON f.recipe_id = r.id AND f.user_id = #{userId}
+        WHERE <include refid="visible"/>
+        <include refid="keyword"/>
+        ORDER BY r.id ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="findVisible" resultMap="card">
+        SELECT <include refid="cardColumns"/>, r.servings, r.additional_content
+        FROM recipe r
+        JOIN recipe_source s ON s.id = r.source_id
+        LEFT JOIN favorite_recipe f ON f.recipe_id = r.id AND f.user_id = #{userId}
+        WHERE r.id = #{recipeId} AND <include refid="visible"/>
+    </select>
+    <select id="countFavorites" resultType="long">
+        SELECT count(*) FROM favorite_recipe f
+        JOIN recipe r ON r.id = f.recipe_id
+        JOIN recipe_source s ON s.id = r.source_id
+        WHERE f.user_id = #{userId} AND <include refid="visible"/>
+    </select>
+    <select id="listFavorites" resultMap="card">
+        SELECT <include refid="cardColumns"/>
+        FROM favorite_recipe f
+        JOIN recipe r ON r.id = f.recipe_id
+        JOIN recipe_source s ON s.id = r.source_id
+        WHERE f.user_id = #{userId} AND <include refid="visible"/>
+        ORDER BY f.created_at DESC, r.id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="ingredients" resultType="com.cooker.recipe.dto.IngredientRow">
+        SELECT COALESCE(i.canonical_name, ri.raw_name) AS name,
+               ri.raw_line, ri.amount_min, ri.amount_max, ri.unit_label, ri.optional
+        FROM recipe_ingredient ri
+        LEFT JOIN ingredient i ON i.id = ri.ingredient_id
+        WHERE ri.recipe_id = #{recipeId}
+        ORDER BY ri.sort_order ASC, ri.id ASC
+    </select>
+    <select id="steps" resultType="com.cooker.recipe.dto.StepRow">
+        SELECT step_no, content FROM recipe_step
+        WHERE recipe_id = #{recipeId}
+        ORDER BY step_no ASC, id ASC
+    </select>
+    <select id="tools" resultType="com.cooker.recipe.dto.ToolRow">
+        SELECT ct.canonical_name AS name, rt.optional
+        FROM recipe_tool rt JOIN cooking_tool ct ON ct.id = rt.tool_id
+        WHERE rt.recipe_id = #{recipeId}
+        ORDER BY ct.canonical_name ASC, rt.tool_id ASC
+    </select>
+</mapper>

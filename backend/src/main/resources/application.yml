@@ -36,6 +36,16 @@ management:
 # 菜谱快照必须由 recipe-import profile 显式触发；此处不提供数据集路径默认值，
 # 避免普通应用启动意外读取开发机文件系统。
 cooker:
+  identity:
+    jwt-secret: ${COOKER_JWT_SECRET:}
+    llm-credential:
+      master-key: ${LLM_CREDENTIAL_MASTER_KEY:}
+    issuer: cooker
+    audience: cooker-web
+    access-minutes: ${COOKER_ACCESS_MINUTES:15}
+    session-hours: ${COOKER_SESSION_HOURS:24}
+    remember-days: ${COOKER_REMEMBER_DAYS:30}
+    secure-cookie: ${COOKER_SECURE_COOKIE:true}
   retrieval:
     index:
       document-template-version: ${COOKER_RETRIEVAL_INDEX_DOCUMENT_TEMPLATE_VERSION:1}

@@ -45,7 +45,7 @@ class RecipeSearchPostgresTest {
 
     @Test
     void 迁移重复执行且结构化条件权限和两路去重均有效() {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success", Integer.class)).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success", Integer.class)).isEqualTo(7);
         assertThat(Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(),
                 POSTGRES.getPassword()).load().migrate().migrationsExecuted).isZero();
         seed();

@@ -12,4 +12,8 @@
 - `ADR-002-MyBatis-Plus持久层规范.md`
 - `ADR-003-HowToCook快照导入与宽容解析.md`
 - `ADR-004-混合检索与向量版本化.md`
+- `ADR-005-JWT记住我与烹饪记录边界.md`
+- `ADR-006-阶段2前端提前与真实联调验收.md`
+- `ADR-007-接受记住我Cookie已知偏差.md`
+- `ADR-008-DeepSeek官方接入与受控Agent编排.md`（官方平台/模型及3A→3B已确认；技术推荐待确认和具体实施授权）
 
