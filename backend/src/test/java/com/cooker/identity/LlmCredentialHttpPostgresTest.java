@@ -55,6 +55,8 @@ class LlmCredentialHttpPostgresTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("cooker.identity.llm-credential.master-key", () -> TEST_MASTER_KEY);
+        // T8专项仍精确验证V7；U1另有覆盖新迁移及兼容性的真实PG测试。
+        registry.add("spring.flyway.target", () -> "7");
     }
 
     @Value("${local.server.port}") int port;

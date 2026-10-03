@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.recipe.mapper.MealFactsMapper">
+  <!-- 每个批量查询都独立检查可见性，不信任上一条SQL留下的ID。 -->
+  <sql id="visible">
+    ((s.source_type = 'SYSTEM_HOWTOCOOK' AND s.owner_user_id IS NULL AND s.visibility = 'PUBLIC')
+     OR (s.source_type = 'USER_CUSTOM' AND s.visibility = 'PRIVATE' AND s.owner_user_id = #{viewerUserId}))
+    AND r.id IN <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+  </sql>
+  <select id="recipes" resultType="com.cooker.recipe.dto.MealFactRows$RecipeRow">
+    SELECT r.id AS recipe_id, r.name, r.category_code, s.source_type, s.source_key,
+      r.source_document_id, d.content_hash AS source_content_hash,
+      r.servings, r.estimated_minutes, r.additional_content
+    FROM recipe r JOIN recipe_source s ON s.id = r.source_id
+      JOIN recipe_source_document d ON d.id = r.source_document_id AND d.source_id = s.id
+    WHERE <include refid="visible"/> ORDER BY r.id
+  </select>
+  <select id="ingredients" resultType="com.cooker.recipe.dto.MealFactRows$IngredientRow">
+    SELECT r.id AS recipe_id, ri.id AS recipe_ingredient_id, ri.ingredient_id,
+      i.normalization_status, ri.raw_name, ri.raw_line, ri.amount_min, ri.amount_max,
+      ri.unit_code, ri.unit_label, ri.optional, ri.sort_order
+    FROM recipe r JOIN recipe_source s ON s.id = r.source_id
+      JOIN recipe_ingredient ri ON ri.recipe_id = r.id LEFT JOIN ingredient i ON i.id = ri.ingredient_id
+    WHERE <include refid="visible"/> ORDER BY r.id, ri.sort_order, ri.id
+  </select>
+  <select id="steps" resultType="com.cooker.recipe.dto.MealFactRows$StepRow">
+    SELECT r.id AS recipe_id, st.id AS step_id, st.step_no, st.content
+    FROM recipe r JOIN recipe_source s ON s.id = r.source_id JOIN recipe_step st ON st.recipe_id = r.id
+    WHERE <include refid="visible"/> ORDER BY r.id, st.step_no, st.id
+  </select>
+  <select id="tools" resultType="com.cooker.recipe.dto.MealFactRows$ToolRow">
+    SELECT r.id AS recipe_id, ct.id AS tool_id, ct.canonical_name AS name, rt.optional
+    FROM recipe r JOIN recipe_source s ON s.id = r.source_id
+      JOIN recipe_tool rt ON rt.recipe_id = r.id JOIN cooking_tool ct ON ct.id = rt.tool_id
+    WHERE <include refid="visible"/> ORDER BY r.id, ct.id
+  </select>
+</mapper>

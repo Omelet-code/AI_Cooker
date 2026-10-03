@@ -44,7 +44,9 @@ class T9RecipeHttpPostgresTest {
     @Autowired JdbcTemplate jdbc;
 
     @Test void 列表详情权限与并发收藏全部经真实HTTP() throws Exception {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success", Integer.class)).isEqualTo(7);
+        // 当前稳定基线为V1～V7加U1的V10；按数字排序核验版本，不能把版本号当迁移条数。
+        assertThat(jdbc.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 10);
         Browser a = new Browser(); Browser b = new Browser(); Browser anonymous = new Browser();
         assertThat(anonymous.get("/recipes").statusCode()).isEqualTo(401);
         String aId = a.registerAndLogin("t9_alice", "test-password-alice");

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.identity.mapper.UserDiningProfileMapper">
+    <resultMap id="profile" type="com.cooker.identity.entity.UserDiningProfileEntity">
+        <id property="userId" column="user_id"/>
+        <result property="defaultDiningCount" column="default_dining_count"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+    <select id="findByUserId" resultMap="profile">
+        SELECT user_id, default_dining_count, created_at, updated_at
+        FROM user_profile WHERE user_id = #{userId}
+    </select>
+    <!-- 共享锁互相兼容，并阻止账号删除在核验和档案操作之间穿过。GET不创建档案。 -->
+    <select id="lockExistingUser" resultType="java.lang.Long">
+        SELECT id FROM app_user WHERE id = #{userId} FOR KEY SHARE
+    </select>
+    <!-- 写操作标明affectData以让MyBatis正确维护事务；单条语句完成冲突更新并返回本次值。 -->
+    <select id="upsert" resultMap="profile" affectData="true" flushCache="true">
+        INSERT INTO user_profile(user_id, default_dining_count)
+        VALUES (#{userId}, #{defaultDiningCount,jdbcType=INTEGER})
+        ON CONFLICT (user_id) DO UPDATE SET
+            default_dining_count = EXCLUDED.default_dining_count,
+            updated_at = CURRENT_TIMESTAMP
+        RETURNING user_id, default_dining_count, created_at, updated_at
+    </select>
+</mapper>

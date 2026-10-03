@@ -31,7 +31,7 @@ class LlmCredentialMigrationPostgresTest {
         }
 
         Flyway upgrade = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(),
-                POSTGRES.getPassword()).load();
+                POSTGRES.getPassword()).target(MigrationVersion.fromVersion("7")).load();
         assertThat(upgrade.migrate().migrationsExecuted).isEqualTo(1);
         try (var connection = java.sql.DriverManager.getConnection(POSTGRES.getJdbcUrl(),
                 POSTGRES.getUsername(), POSTGRES.getPassword())) {
