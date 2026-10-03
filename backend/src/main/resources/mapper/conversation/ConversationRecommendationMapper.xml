@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.conversation.mapper.ConversationRecommendationMapper">
+  <resultMap id="ContextMessageMap" type="com.cooker.conversation.vo.RecommendationContextMessageRow">
+    <constructor>
+      <arg column="turn_no" javaType="long"/>
+      <arg column="role" javaType="java.lang.String"/>
+      <arg column="content" javaType="java.lang.String"/>
+    </constructor>
+  </resultMap>
+  <resultMap id="SnapshotMap" type="com.cooker.conversation.dto.RecommendationSnapshot">
+    <constructor>
+      <arg column="constraints_json" javaType="java.lang.String"/>
+      <arg column="result_json" javaType="java.lang.String"/>
+    </constructor>
+  </resultMap>
+
+  <select id="recentSuccessfulMessages" resultMap="ContextMessageMap">
+    WITH recent AS (
+      SELECT t.id, t.turn_no
+      FROM conversation_turn t
+      JOIN chat_message u ON u.turn_id=t.id AND u.role='USER'
+      JOIN chat_message a ON a.turn_id=t.id AND a.role='ASSISTANT'
+      WHERE t.user_id=#{userId} AND t.conversation_id=#{conversationId}
+        AND t.turn_no &lt; #{beforeTurnNo} AND t.status='SUCCEEDED'
+      ORDER BY t.turn_no DESC
+      LIMIT 6
+    )
+    SELECT r.turn_no, m.role, m.content
+    FROM recent r JOIN chat_message m ON m.turn_id=r.id AND m.role IN ('USER','ASSISTANT')
+    ORDER BY r.turn_no ASC, m.sequence ASC
+  </select>
+
+  <select id="latestEffectiveConstraints" resultType="string">
+    SELECT r.constraints::text
+    FROM conversation_recommendation r
+    JOIN conversation_turn t ON t.id=r.turn_id AND t.conversation_id=r.conversation_id AND t.user_id=r.user_id
+    WHERE r.user_id=#{userId} AND r.conversation_id=#{conversationId}
+      AND t.turn_no &lt; #{beforeTurnNo} AND t.status='SUCCEEDED'
+      AND r.result-&gt;&gt;'outcome' IN ('RECOMMENDED','NO_MATCH')
+    ORDER BY t.turn_no DESC
+    LIMIT 1
+  </select>
+
+  <select id="findOwned" resultMap="SnapshotMap">
+    SELECT constraints::text AS constraints_json, result::text AS result_json
+    FROM conversation_recommendation
+    WHERE user_id=#{userId} AND conversation_id=#{conversationId} AND turn_id=#{turnId}
+  </select>
+
+  <insert id="insertSnapshot">
+    INSERT INTO conversation_recommendation(turn_id,conversation_id,user_id,schema_version,constraints,result)
+    VALUES(#{turnId},#{conversationId},#{userId},1,CAST(#{constraintsJson} AS jsonb),CAST(#{resultJson} AS jsonb))
+  </insert>
+</mapper>

@@ -44,7 +44,7 @@ class T9RecipeHttpPostgresTest {
     @Autowired JdbcTemplate jdbc;
 
     @Test void 列表详情权限与并发收藏全部经真实HTTP() throws Exception {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success", Integer.class)).isEqualTo(7);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success", Integer.class)).isEqualTo(9);
         Browser a = new Browser(); Browser b = new Browser(); Browser anonymous = new Browser();
         assertThat(anonymous.get("/recipes").statusCode()).isEqualTo(401);
         String aId = a.registerAndLogin("t9_alice", "test-password-alice");

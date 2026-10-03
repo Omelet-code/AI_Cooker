@@ -10,14 +10,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
-/** 在独立空 PostgreSQL 中先停在 V6，再升级 V7 并验证原身份数据保留。 */
+/** 在独立空 PostgreSQL 中先停在 V6，再升级 V7～V9 并验证原身份数据保留。 */
 @Testcontainers(disabledWithoutDocker = true)
 class LlmCredentialMigrationPostgresTest {
     @Container static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
             DockerImageName.parse("cooker-postgres:pg18-zhparser").asCompatibleSubstituteFor("postgres"))
             .withDatabaseName("cooker_t8_migration_test").withUsername("root").withPassword("test-only");
 
-    @Test void 空库可迁移且V6升级V7不影响既有用户() {
+    @Test void 空库可迁移且V6升级V9不影响既有用户() {
         Flyway beforeV7 = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(),
                 POSTGRES.getPassword()).target(MigrationVersion.fromVersion("6")).load();
         assertThat(beforeV7.migrate().migrationsExecuted).isEqualTo(6);
@@ -32,7 +32,7 @@ class LlmCredentialMigrationPostgresTest {
 
         Flyway upgrade = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(),
                 POSTGRES.getPassword()).load();
-        assertThat(upgrade.migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(upgrade.migrate().migrationsExecuted).isEqualTo(3);
         try (var connection = java.sql.DriverManager.getConnection(POSTGRES.getJdbcUrl(),
                 POSTGRES.getUsername(), POSTGRES.getPassword())) {
             try (var statement = connection.createStatement()) {
@@ -46,11 +46,11 @@ class LlmCredentialMigrationPostgresTest {
                 }
                 try (var rows = statement.executeQuery("SELECT count(*) FROM flyway_schema_history WHERE success")) {
                     rows.next();
-                    assertThat(rows.getInt(1)).isEqualTo(7);
+                    assertThat(rows.getInt(1)).isEqualTo(9);
                 }
             }
         } catch (java.sql.SQLException e) {
-            throw new AssertionError("测试库验证 V7 失败", e);
+            throw new AssertionError("测试库验证 V7～V9 失败", e);
         }
     }
 }

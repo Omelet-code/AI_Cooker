@@ -64,7 +64,7 @@ class LlmCredentialHttpPostgresTest {
     @Autowired LlmCredentialService credentials;
 
     @Test void 当前用户凭证接口密文隔离覆盖删除及错误输入均经真实HTTP(CapturedOutput output) throws Exception {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success", Integer.class)).isEqualTo(7);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success", Integer.class)).isEqualTo(9);
         Browser anonymous = new Browser();
         assertThat(anonymous.get("/users/me/llm-credential/status").statusCode()).isEqualTo(401);
         assertThat(anonymous.putWithoutCsrf("/users/me/llm-credential", body(FAKE_KEY)).statusCode()).isEqualTo(403);

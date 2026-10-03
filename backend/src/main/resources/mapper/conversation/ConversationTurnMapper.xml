@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.conversation.mapper.ConversationTurnMapper">
+  <resultMap id="TurnEntityMap" type="com.cooker.conversation.entity.ConversationTurnEntity">
+    <id column="id" property="id"/><result column="conversation_id" property="conversationId"/>
+    <result column="user_id" property="userId"/><result column="request_id" property="requestId" javaType="java.util.UUID" typeHandler="com.cooker.conversation.mapper.UuidTypeHandler"/>
+    <result column="input_hash" property="inputHash"/><result column="turn_no" property="turnNo"/>
+    <result column="status" property="status"/><result column="created_at" property="createdAt"/>
+    <result column="started_at" property="startedAt"/><result column="finished_at" property="finishedAt"/>
+    <result column="deadline_at" property="deadlineAt"/><result column="error_code" property="errorCode"/>
+  </resultMap>
+  <resultMap id="TurnViewMap" type="com.cooker.conversation.vo.TurnRow">
+    <constructor>
+      <idArg column="id" javaType="java.lang.String"/><arg column="conversation_id" javaType="java.lang.String"/>
+      <arg column="request_id" javaType="java.lang.String"/><arg column="turn_no" javaType="long"/>
+      <arg column="status" javaType="com.cooker.conversation.vo.TurnStatus"/>
+      <arg column="created_at" javaType="java.time.OffsetDateTime"/>
+      <arg column="started_at" javaType="java.time.OffsetDateTime"/>
+      <arg column="finished_at" javaType="java.time.OffsetDateTime"/>
+      <arg column="error_code" javaType="java.lang.String"/><arg column="error_message" javaType="java.lang.String"/>
+    </constructor>
+  </resultMap>
+  <sql id="EntityColumns">id, conversation_id, user_id, request_id, input_hash, turn_no, status, created_at, started_at, finished_at, deadline_at, error_code</sql>
+  <select id="lockExpired" resultMap="TurnEntityMap">
+    SELECT <include refid="EntityColumns"/> FROM conversation_turn
+    WHERE conversation_id = #{conversationId} AND status IN ('PENDING','RUNNING') AND deadline_at &lt;= clock_timestamp()
+    ORDER BY id FOR UPDATE
+  </select>
+  <select id="lockByRequest" resultMap="TurnEntityMap">
+    SELECT <include refid="EntityColumns"/> FROM conversation_turn
+    WHERE user_id = #{userId} AND conversation_id = #{conversationId} AND request_id = #{requestId,typeHandler=com.cooker.conversation.mapper.UuidTypeHandler} FOR UPDATE
+  </select>
+  <select id="lockActive" resultMap="TurnEntityMap">
+    SELECT <include refid="EntityColumns"/> FROM conversation_turn
+    WHERE conversation_id = #{conversationId} AND status IN ('PENDING','RUNNING') FOR UPDATE
+  </select>
+  <select id="lockTurn" resultMap="TurnEntityMap">
+    SELECT <include refid="EntityColumns"/> FROM conversation_turn
+    WHERE user_id = #{userId} AND conversation_id = #{conversationId} AND id = #{turnId} FOR UPDATE
+  </select>
+  <update id="expire">UPDATE conversation_turn SET status='FAILED', finished_at=clock_timestamp(), error_code='RUNTIME_INTERRUPTED' WHERE id=#{turnId} AND status IN ('PENDING','RUNNING') AND deadline_at &lt;= clock_timestamp()</update>
+  <update id="start">UPDATE conversation_turn SET status='RUNNING', started_at=clock_timestamp() WHERE id=#{turnId} AND status='PENDING' AND deadline_at &gt; clock_timestamp()</update>
+  <update id="succeed">UPDATE conversation_turn SET status='SUCCEEDED', finished_at=clock_timestamp() WHERE id=#{turnId} AND status='RUNNING' AND deadline_at &gt; clock_timestamp()</update>
+  <update id="fail">UPDATE conversation_turn SET status='FAILED', finished_at=clock_timestamp(), error_code=#{errorCode} WHERE id=#{turnId} AND status IN ('PENDING','RUNNING')</update>
+  <insert id="insertWithDeadline" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    INSERT INTO conversation_turn(conversation_id,user_id,request_id,input_hash,turn_no,status,deadline_at)
+    VALUES(#{conversationId},#{userId},#{requestId,typeHandler=com.cooker.conversation.mapper.UuidTypeHandler},#{inputHash},#{turnNo},#{status},clock_timestamp() + interval '120 seconds')
+  </insert>
+  <select id="databaseNow" resultType="java.time.OffsetDateTime">
+    SELECT clock_timestamp() FROM conversation_turn WHERE id=#{turnId}
+  </select>
+  <select id="findOwned" resultMap="TurnViewMap">
+    SELECT t.id::text AS id, t.conversation_id::text AS conversation_id, t.request_id::text AS request_id,
+      t.turn_no, t.status, t.created_at, t.started_at, t.finished_at,
+      CASE WHEN t.status='FAILED' THEN t.error_code ELSE NULL END AS error_code,
+      CASE WHEN t.status='FAILED' THEN CASE t.error_code
+        WHEN 'RUNTIME_INTERRUPTED' THEN '执行已中断，请重新发起请求'
+        WHEN 'CREDENTIAL_NOT_CONFIGURED' THEN '尚未配置模型凭证'
+        WHEN 'CREDENTIAL_SERVICE_UNAVAILABLE' THEN '凭证服务暂时不可用'
+        WHEN 'MODEL_AUTHENTICATION_FAILED' THEN '模型认证失败'
+        WHEN 'MODEL_RATE_LIMITED' THEN '模型服务请求过于频繁'
+        WHEN 'MODEL_TIMEOUT' THEN '模型处理超时'
+        WHEN 'MODEL_UNAVAILABLE' THEN '模型服务暂时不可用'
+        WHEN 'MODEL_INVALID_RESPONSE' THEN '模型返回内容无效'
+        WHEN 'RETRIEVAL_FAILED' THEN '菜谱检索失败'
+        WHEN 'RESOURCE_LIMIT' THEN '请求超过资源限制'
+        ELSE '执行失败，请稍后重试' END ELSE NULL END AS error_message
+    FROM conversation_turn t WHERE t.id=#{turnId} AND t.conversation_id=#{conversationId} AND t.user_id=#{userId}
+  </select>
+</mapper>

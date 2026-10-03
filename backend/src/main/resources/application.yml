@@ -33,6 +33,11 @@ management:
     health:
       show-details: never
 
+logging:
+  level:
+    # Spring AI 2.0.1 的空响应 WARN 会拼接完整 Prompt；T12 的安全异常负责给出无内容错误分类。
+    org.springframework.ai.deepseek.DeepSeekChatModel: ERROR
+
 # 菜谱快照必须由 recipe-import profile 显式触发；此处不提供数据集路径默认值，
 # 避免普通应用启动意外读取开发机文件系统。
 cooker:
@@ -46,6 +51,8 @@ cooker:
     session-hours: ${COOKER_SESSION_HOURS:24}
     remember-days: ${COOKER_REMEMBER_DAYS:30}
     secure-cookie: ${COOKER_SECURE_COOKIE:true}
+  agent:
+    execution-enabled: false
   retrieval:
     index:
       document-template-version: ${COOKER_RETRIEVAL_INDEX_DOCUMENT_TEMPLATE_VERSION:1}
