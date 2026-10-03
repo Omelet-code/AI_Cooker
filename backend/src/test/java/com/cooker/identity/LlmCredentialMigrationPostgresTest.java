@@ -10,7 +10,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
-/** 在独立空 PostgreSQL 中先停在 V6，再升级 V7 并验证原身份数据保留。 */
+/** 在独立空 PostgreSQL 中先停在 V6，再专项升级 V7 并验证原身份数据保留。 */
 @Testcontainers(disabledWithoutDocker = true)
 class LlmCredentialMigrationPostgresTest {
     @Container static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(

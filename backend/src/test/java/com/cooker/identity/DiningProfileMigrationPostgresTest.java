@@ -36,8 +36,11 @@ class DiningProfileMigrationPostgresTest {
 
     @Test void 空库迁移至V10且没有自动初始化档案() {
         String url = newDatabase();
-        assertThat(flyway(url, false, null).migrate().migrationsExecuted).isEqualTo(8);
+        assertThat(flyway(url, null).migrate().migrationsExecuted).isEqualTo(10);
         JdbcTemplate db = jdbc(url);
+        assertThat(db.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        assertThat(flyway(url, null).migrate().migrationsExecuted).isZero();
         assertThat(db.queryForObject("SELECT max(version::integer) FROM flyway_schema_history", Integer.class)).isEqualTo(10);
         assertThat(db.queryForObject("SELECT count(*) FROM user_profile", Integer.class)).isZero();
         assertThat(db.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_name='user_profile'", Integer.class)).isEqualTo(4);
@@ -47,7 +50,7 @@ class DiningProfileMigrationPostgresTest {
         upgradePreservesData(false, "7");
     }
 
-    @Test void V9原文fixture哈希一致且升级V10保留旧业务快照() throws Exception {
+    @Test void V9fixture原字节哈希保留且生产原文一致并升级V10保留旧业务快照() throws Exception {
         assertFixtureHash("V8__create_conversation_tables.sql", "6c73a19428aa7c4a7ce3de3b8c6b1d44528cd19892ac3aead7011b91f057c587");
         assertFixtureHash("V9__create_conversation_recommendation.sql", "399445ed6306760187cfe4d5d4b45847e628b1052a4aad057eba3abf9e1b8943");
         upgradePreservesData(true, "9");
@@ -55,7 +58,7 @@ class DiningProfileMigrationPostgresTest {
 
     @Test void 主键正数外键级联删除与并发UPSERT由真实PG约束() throws Exception {
         String url = newDatabase();
-        flyway(url, false, null).migrate();
+        flyway(url, null).migrate();
         JdbcTemplate db = jdbc(url);
         long user = db.queryForObject("INSERT INTO app_user(username,password_hash) VALUES('u1_constraints','fake') RETURNING id", Long.class);
         db.update("INSERT INTO user_profile(user_id,default_dining_count) VALUES (?,null)", user);
@@ -98,14 +101,18 @@ class DiningProfileMigrationPostgresTest {
 
     private void upgradePreservesData(boolean fixture, String target) {
         String url = newDatabase();
-        assertThat(flyway(url, fixture, target).migrate().migrationsExecuted).isEqualTo(Integer.parseInt(target));
+        assertThat(flyway(url, target).migrate().migrationsExecuted).isEqualTo(Integer.parseInt(target));
         JdbcTemplate db = jdbc(url);
         seed(db, fixture);
         Map<String, Object> before = snapshot(db, fixture);
-        assertThat(flyway(url, fixture, null).migrate().migrationsExecuted).isEqualTo(1);
+        // V7之后真实执行V8/V9/V10；V9之后只执行V10，不再重复加载同版本fixture。
+        assertThat(flyway(url, null).migrate().migrationsExecuted).isEqualTo(10 - Integer.parseInt(target));
         assertThat(snapshot(db, fixture)).isEqualTo(before);
         assertThat(db.queryForObject("SELECT count(*) FROM user_profile", Integer.class)).isZero();
-        assertThat(flyway(url, fixture, null).info().current().getVersion().getVersion()).isEqualTo("10");
+        assertThat(flyway(url, null).info().current().getVersion().getVersion()).isEqualTo("10");
+        assertThat(db.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        assertThat(flyway(url, null).migrate().migrationsExecuted).isZero();
     }
 
     private void seed(JdbcTemplate db, boolean fixture) {
@@ -135,9 +142,10 @@ class DiningProfileMigrationPostgresTest {
         return snapshot;
     }
 
-    private Flyway flyway(String url, boolean fixture, String target) {
+    private Flyway flyway(String url, String target) {
         var config = Flyway.configure().dataSource(url, "root", "test-only");
-        config.locations(fixture ? new String[] {"classpath:db/migration", "classpath:identity/u1/v9-fixture"} : new String[] {"classpath:db/migration"});
+        // fixture只作原字节核验；整合基线的升级场景统一使用真实生产迁移。
+        config.locations("classpath:db/migration");
         if (target != null) config.target(target);
         return config.load();
     }
@@ -172,10 +180,17 @@ class DiningProfileMigrationPostgresTest {
         });
     }
     private void assertFixtureHash(String file, String expected) throws Exception {
-        try (var source = getClass().getResourceAsStream("/identity/u1/v9-fixture/" + file)) {
+        try (var source = getClass().getResourceAsStream("/identity/u1/v9-fixture/" + file);
+                var production = getClass().getResourceAsStream("/db/migration/" + file)) {
             assertThat(source).as("fixture存在").isNotNull();
+            assertThat(production).as("生产迁移存在").isNotNull();
             // 原始字节哈希，包含原换行；不做CRLF/LF归一化。
-            assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(source.readAllBytes()))).isEqualTo(expected);
+            byte[] original = source.readAllBytes();
+            assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(original))).isEqualTo(expected);
+            // Git在Windows将生产文件检出为CRLF，fixture仍为LF；只在原文比对时适配换行。
+            // fixture哈希仍直接核验原字节，绝不修改fixture或生产迁移文件。
+            assertThat(new String(production.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).replace("\r\n", "\n"))
+                    .isEqualTo(new String(original, java.nio.charset.StandardCharsets.UTF_8));
         }
     }
 }

@@ -55,8 +55,6 @@ class LlmCredentialHttpPostgresTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("cooker.identity.llm-credential.master-key", () -> TEST_MASTER_KEY);
-        // T8专项仍精确验证V7；U1另有覆盖新迁移及兼容性的真实PG测试。
-        registry.add("spring.flyway.target", () -> "7");
     }
 
     @Value("${local.server.port}") int port;
@@ -66,7 +64,9 @@ class LlmCredentialHttpPostgresTest {
     @Autowired LlmCredentialService credentials;
 
     @Test void 当前用户凭证接口密文隔离覆盖删除及错误输入均经真实HTTP(CapturedOutput output) throws Exception {
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM flyway_schema_history WHERE success", Integer.class)).isEqualTo(7);
+        // HTTP回归加载完整整合基线，V6→V7专项由迁移测试单独覆盖。
+        assertThat(jdbc.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         Browser anonymous = new Browser();
         assertThat(anonymous.get("/users/me/llm-credential/status").statusCode()).isEqualTo(401);
         assertThat(anonymous.putWithoutCsrf("/users/me/llm-credential", body(FAKE_KEY)).statusCode()).isEqualTo(403);

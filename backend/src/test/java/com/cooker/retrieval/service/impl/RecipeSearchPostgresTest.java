@@ -45,9 +45,9 @@ class RecipeSearchPostgresTest {
 
     @Test
     void 迁移重复执行且结构化条件权限和两路去重均有效() {
-        // 当前稳定基线为V1～V7加U1的V10；按数字排序核验版本，不能把版本号当迁移条数。
+        // 整合T13/T14与U1后完整生产迁移为V1～V10，按数字顺序精确核验。
         assertThat(jdbc.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
-                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 10);
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         assertThat(Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(),
                 POSTGRES.getPassword()).load().migrate().migrationsExecuted).isZero();
         seed();
