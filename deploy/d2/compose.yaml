@@ -1,0 +1,89 @@
+name: ${RELEASE_PROJECT:?必须指定独立发布项目名}
+x-log: &log
+  driver: json-file
+  options: {max-size: '10m', max-file: '3'}
+services:
+  postgres:
+    mem_limit: 1024m
+    cpus: 0.75
+    pids_limit: 256
+    command: [postgres, -c, shared_buffers=128MB, -c, work_mem=4MB, -c, maintenance_work_mem=64MB, -c, max_connections=40]
+    image: ${POSTGRES_IMAGE:?必须指定含vector及zhparser的固定镜像引用}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?必须指定数据库名}
+      POSTGRES_USER: ${POSTGRES_USER:?必须指定数据库角色}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?数据库密码不得为空}
+    volumes: ['pg-data:/var/lib/postgresql']
+    networks: [data]
+    logging: *log
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  backend:
+    mem_limit: 1536m
+    cpus: 1.0
+    pids_limit: 256
+    image: ${BACKEND_IMAGE:?必须指定本次构建的后端固定镜像引用}
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:?必须指定数据库名}
+      DB_USERNAME: ${POSTGRES_USER:?必须指定数据库角色}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?数据库密码不得为空}
+      COOKER_JWT_SECRET: ${COOKER_JWT_SECRET:?JWT签名秘密不得为空}
+      LLM_CREDENTIAL_MASTER_KEY: ${LLM_CREDENTIAL_MASTER_KEY:?凭证加密主密钥不得为空}
+      COOKER_SECURE_COOKIE: 'true'
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/opt/cooker/mock-catalog.yml
+      # 默认关闭；D2-B1允许用户在部署环境显式开启厨房调用。
+      COOKER_AGENT_EXECUTION_ENABLED: ${COOKER_AGENT_EXECUTION_ENABLED:-false}
+      COOKER_EVALUATION_HTTP_ENABLED: 'false'
+      COOKER_RECIPE_IMPORT_ENABLED: 'false'
+      COOKER_RETRIEVAL_INDEX_ENABLED: 'false'
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: '8'
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: '2'
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: '5000'
+      JAVA_TOOL_OPTIONS: '-Xms256m -Xmx768m -XX:MaxMetaspaceSize=192m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError -Djdk.httpclient.enableAllMethodRetry=false -Djdk.httpclient.disableRetryConnect=true'
+    volumes: ['./config/mock-catalog.yml:/opt/cooker/mock-catalog.yml:ro']
+    networks: [data, edge, egress]
+    depends_on:
+      postgres: {condition: service_healthy}
+    logging: *log
+  web:
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 128
+    image: ${WEB_IMAGE:?必须指定本次构建的Web固定镜像引用}
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?必须指定入口IP或域名}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?必须指定同一入口的HTTPS源}
+      NGINX_ENVSUBST_FILTER: '^(DOMAIN|PUBLIC_ORIGIN|REGISTER_RATE|LOGIN_RATE|MODEL_RATE|REGISTER_BURST|LOGIN_BURST|MODEL_BURST|REGISTER_CONCURRENCY|LOGIN_CONCURRENCY|MODEL_IP_CONCURRENCY|MODEL_GLOBAL_CONCURRENCY)$'
+      REGISTER_RATE: ${REGISTER_RATE:-3r/m}
+      LOGIN_RATE: ${LOGIN_RATE:-10r/m}
+      MODEL_RATE: ${MODEL_RATE:-6r/m}
+      REGISTER_BURST: ${REGISTER_BURST:-2}
+      LOGIN_BURST: ${LOGIN_BURST:-5}
+      MODEL_BURST: ${MODEL_BURST:-2}
+      REGISTER_CONCURRENCY: ${REGISTER_CONCURRENCY:-1}
+      LOGIN_CONCURRENCY: ${LOGIN_CONCURRENCY:-2}
+      MODEL_IP_CONCURRENCY: ${MODEL_IP_CONCURRENCY:-1}
+      MODEL_GLOBAL_CONCURRENCY: ${MODEL_GLOBAL_CONCURRENCY:-2}
+    ports: ['${HTTPS_BIND:-0.0.0.0}:443:443', '${HTTP_BIND:-0.0.0.0}:80:80']
+    volumes:
+      - '${TLS_DIRECTORY:?必须指定独立证书目录}:/etc/nginx/tls:ro'
+      - '${ACME_WEBROOT:?必须指定HTTP-01挑战目录}:/var/www/acme:ro'
+      - './nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro'
+    networks: [edge, ingress]
+    depends_on: [backend]
+    logging: *log
+networks:
+  data: {internal: true}
+  edge: {internal: true}
+  egress: {}
+  ingress: {}
+volumes:
+  pg-data: {}

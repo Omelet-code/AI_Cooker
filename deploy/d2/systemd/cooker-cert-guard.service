@@ -1,0 +1,9 @@
+[Unit]
+Description=Cooker证书有效性与24小时预警
+OnFailure=cooker-cert-alert@%n.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /srv/cooker/release/deploy/scripts/certificates.py guard --config /etc/cooker/cert-flow.json
+TimeoutStartSec=90

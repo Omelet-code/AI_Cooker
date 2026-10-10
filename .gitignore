@@ -27,6 +27,8 @@ frontend/*.local
 frontend/*.tsbuildinfo
 
 # 临时文件
+__pycache__/
+*.py[cod]
 tmp/
 temp/
 *.tmp

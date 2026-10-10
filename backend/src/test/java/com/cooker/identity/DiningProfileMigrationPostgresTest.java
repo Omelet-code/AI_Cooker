@@ -34,23 +34,23 @@ class DiningProfileMigrationPostgresTest {
             DockerImageName.parse("cooker-postgres:pg18-zhparser").asCompatibleSubstituteFor("postgres"))
             .withDatabaseName("cooker_u1_pg").withUsername("root").withPassword("test-only");
 
-    @Test void 空库迁移至V10且没有自动初始化档案() {
+    @Test void 空库迁移至V15且没有自动初始化档案() {
         String url = newDatabase();
-        assertThat(flyway(url, null).migrate().migrationsExecuted).isEqualTo(10);
+        assertThat(flyway(url, null).migrate().migrationsExecuted).isEqualTo(15);
         JdbcTemplate db = jdbc(url);
         assertThat(db.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
-                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         assertThat(flyway(url, null).migrate().migrationsExecuted).isZero();
-        assertThat(db.queryForObject("SELECT max(version::integer) FROM flyway_schema_history", Integer.class)).isEqualTo(10);
+        assertThat(db.queryForObject("SELECT max(version::integer) FROM flyway_schema_history", Integer.class)).isEqualTo(15);
         assertThat(db.queryForObject("SELECT count(*) FROM user_profile", Integer.class)).isZero();
         assertThat(db.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_name='user_profile'", Integer.class)).isEqualTo(4);
     }
 
-    @Test void V7升级V10保留用户收藏做菜续期与虚构凭证() {
+    @Test void V7升级V12保留用户收藏做菜续期与虚构凭证() {
         upgradePreservesData(false, "7");
     }
 
-    @Test void V9fixture原字节哈希保留且生产原文一致并升级V10保留旧业务快照() throws Exception {
+    @Test void V9fixture原字节哈希保留且生产原文一致并升级V12保留旧业务快照() throws Exception {
         assertFixtureHash("V8__create_conversation_tables.sql", "6c73a19428aa7c4a7ce3de3b8c6b1d44528cd19892ac3aead7011b91f057c587");
         assertFixtureHash("V9__create_conversation_recommendation.sql", "399445ed6306760187cfe4d5d4b45847e628b1052a4aad057eba3abf9e1b8943");
         upgradePreservesData(true, "9");
@@ -105,13 +105,13 @@ class DiningProfileMigrationPostgresTest {
         JdbcTemplate db = jdbc(url);
         seed(db, fixture);
         Map<String, Object> before = snapshot(db, fixture);
-        // V7之后真实执行V8/V9/V10；V9之后只执行V10，不再重复加载同版本fixture。
-        assertThat(flyway(url, null).migrate().migrationsExecuted).isEqualTo(10 - Integer.parseInt(target));
+        // V7之后真实执行V8/V9/V10/V11/V12/V13/V14/V15；V9之后执行V10/V11/V12/V13/V14/V15，不再重复加载同版本fixture。
+        assertThat(flyway(url, null).migrate().migrationsExecuted).isEqualTo(15 - Integer.parseInt(target));
         assertThat(snapshot(db, fixture)).isEqualTo(before);
         assertThat(db.queryForObject("SELECT count(*) FROM user_profile", Integer.class)).isZero();
-        assertThat(flyway(url, null).info().current().getVersion().getVersion()).isEqualTo("10");
+        assertThat(flyway(url, null).info().current().getVersion().getVersion()).isEqualTo("15");
         assertThat(db.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
-                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         assertThat(flyway(url, null).migrate().migrationsExecuted).isZero();
     }
 

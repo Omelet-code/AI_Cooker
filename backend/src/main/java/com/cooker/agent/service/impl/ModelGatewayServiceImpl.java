@@ -30,10 +30,12 @@ import com.cooker.agent.dto.ModelMessage;
 import com.cooker.agent.dto.ModelOutputMode;
 import com.cooker.agent.dto.ModelUsage;
 import com.cooker.agent.service.ModelGateway;
+import com.cooker.agent.service.GuideInputProfile;
 import com.cooker.agent.service.ModelGatewayException;
 import com.cooker.common.ApiException;
 import com.cooker.identity.service.CurrentUserService;
 import com.cooker.identity.service.LlmCredentialService;
+import com.cooker.evaluation.transport.EvaluationBatch;
 
 /** 将身份凭证、有限 DTO 与一次 DeepSeek 调用隔离在 Agent Service 边界内。 */
 @Service
@@ -56,16 +58,27 @@ public class ModelGatewayServiceImpl implements ModelGateway {
 
     @Override
     public ModelChatResponse complete(ModelChatRequest request) {
-        validate(request);
+        return execute(request, false);
+    }
+
+    @Override
+    public ModelChatResponse completeGuide(ModelChatRequest request) {
+        if (request == null || request.outputMode() != ModelOutputMode.JSON) throw invalidInput();
+        return execute(request, true);
+    }
+
+    private ModelChatResponse execute(ModelChatRequest request, boolean guide) {
+        validate(request, guide);
         requireAuthenticatedUser();
         String apiKey = decryptCurrentUserCredential();
 
         ChatModel client;
         try {
-            client = clientFactory.create(apiKey, request.outputMode());
+            client = guide ? clientFactory.createGuide(apiKey) : clientFactory.create(apiKey, request.outputMode());
         } catch (ModelGatewayException e) {
             throw e;
         } catch (RuntimeException e) {
+            if (containsEvaluationStop(e)) throw evaluationStopped();
             throw new ModelGatewayException(ModelGatewayException.Reason.CREDENTIAL_SERVICE_UNAVAILABLE,
                     "模型凭证暂不可用");
         }
@@ -101,21 +114,20 @@ public class ModelGatewayServiceImpl implements ModelGateway {
         }
     }
 
-    private void validate(ModelChatRequest request) {
+    private void validate(ModelChatRequest request, boolean guide) {
         if (request == null || request.outputMode() == null || request.messages() == null
-                || request.messages().isEmpty() || request.messages().size() > MAX_MESSAGES) {
+                || request.messages().isEmpty() || request.messages().size() > (guide ? GuideInputProfile.MAX_MESSAGES : MAX_MESSAGES)) {
             throw invalidInput();
         }
-        int totalCodePoints = 0;
         for (ModelMessage message : request.messages()) {
             if (message == null || message.role() == null || message.content() == null
                     || message.content().isBlank()) {
                 throw invalidInput();
             }
-            totalCodePoints += message.content().codePointCount(0, message.content().length());
-            if (totalCodePoints > MAX_CONTENT_CODE_POINTS) {
-                throw invalidInput();
-            }
+        }
+        if (GuideInputProfile.codePoints(request.messages())
+                > (guide ? GuideInputProfile.MAX_CODE_POINTS : MAX_CONTENT_CODE_POINTS)) {
+            throw invalidInput();
         }
         if (request.outputMode() == ModelOutputMode.JSON && !containsJsonOutputInstruction(request.messages())) {
             throw invalidInput();
@@ -186,6 +198,7 @@ public class ModelGatewayServiceImpl implements ModelGateway {
     }
 
     private ModelGatewayException mapProviderFailure(RuntimeException failure) {
+        if (containsEvaluationStop(failure)) return evaluationStopped();
         if (failure instanceof RestClientResponseException responseException) {
             HttpStatusCode status = responseException.getStatusCode();
             if (status.value() == 401 || status.value() == 403) {
@@ -221,6 +234,18 @@ public class ModelGatewayServiceImpl implements ModelGateway {
             }
         }
         return false;
+    }
+
+    private boolean containsEvaluationStop(Throwable failure) {
+        var seen=java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<Throwable,Boolean>());
+        for(Throwable current=failure;current!=null&&seen.add(current);current=current.getCause())
+            if(current instanceof EvaluationBatch.Stopped)return true;
+        return false;
+    }
+
+    private ModelGatewayException evaluationStopped() {
+        return new ModelGatewayException(ModelGatewayException.Reason.EVALUATION_STOPPED,
+                "受控评测已停止、缺少批准上下文或额度不足");
     }
 
     private ModelGatewayException invalidInput() {

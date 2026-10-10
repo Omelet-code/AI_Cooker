@@ -548,6 +548,7 @@ public class RecommendationServiceImpl implements RecommendationService {
             case TIMEOUT -> "MODEL_TIMEOUT";
             case PROVIDER_UNAVAILABLE -> "MODEL_UNAVAILABLE";
             case INVALID_INPUT, INVALID_RESPONSE -> "MODEL_INVALID_RESPONSE";
+            case EVALUATION_STOPPED -> "RESOURCE_LIMIT";
         };
     }
 

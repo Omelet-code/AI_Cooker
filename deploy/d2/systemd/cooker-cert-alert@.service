@@ -1,0 +1,6 @@
+[Unit]
+Description=Cooker证书流程本地告警 %i
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/logger -p daemon.err -t cooker-cert "证书流程失败：%i；查看服务日志和cooker-cert-alert.jsonl，部署时需接入运维通知"

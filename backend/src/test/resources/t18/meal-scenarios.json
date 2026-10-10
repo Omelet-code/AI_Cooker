@@ -1,0 +1,21 @@
+{
+  "schemaVersion":1,
+  "evidenceMode":"ISOLATED_SUBSTITUTE",
+  "candidateSeed":42,
+  "seedScope":"仅未来U2隔离候选夹具；U3由服务器登记并保存seed，复用专项不能声称强制固定其seed",
+  "fixturePolicy":"复用下列测试的initialize/setUp和固定ModelGateway替身，不复制宿主数据；所有ID仅为临时夹具身份。模板预期不是本轮观测结果。",
+  "scenarios":[
+    {"id":"M01","category":"随机四菜一汤","request":"三人随机四菜一汤","actions":["CREATE","SELECT","GUIDE","SHOPPING_PREVIEW"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["两套各4菜1汤","随机候选零T5/Embedding","选择零模型"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"四菜一汤两套真实材料字符串ID与零模型选择回看","gap":"跨组餐到采购的单一新库真实轨迹未采样"},
+    {"id":"M02","category":"显式人数覆盖档案","request":"四人随机一道菜一汤","actions":["PROFILE_THREE","CREATE_FOUR","REPLAY"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["EXPLICIT四人","档案后改不追改旧餐"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"默认显式缺失冲突人数与档案不追改修订旧键回读","gap":null},
+    {"id":"M03","category":"无人数澄清","request":"随机一道菜一汤","actions":["EMPTY_PROFILE","CREATE"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["CLARIFICATION","不调用候选或第二次模型"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"默认显式缺失冲突人数与档案不追改修订旧键回读","gap":null},
+    {"id":"M04","category":"排除食材","request":"三人随机一道菜一汤，不要鸡蛋","actions":["CREATE","RECHECK_SELECTION"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["提交和选择复核排除资格","事实或别名变化拒绝旧选择"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"别名改变硬资格即使事实指纹未变也拒绝选择及失败修订清旧选定","gap":"原请求排除鸡蛋的独立组合轨迹待未来隔离执行，当前复用覆盖资格变化"},
+    {"id":"M05","category":"厨具限制","request":"三人一道菜一汤，只用炒锅","actions":["CANDIDATE_FILTER","CREATE"],"fixture":"RecipeSearchPostgresTest","expected":["厨具硬条件与null/空集合分开","不猜厨具"],"reuseClass":"RecipeSearchPostgresTest","reuseMethod":null,"gap":"检索PG专项含过滤；整餐厨具固定输入的独立轨迹未新增"},
+    {"id":"M06","category":"候选不足一或两套","request":"三人随机四菜一汤","actions":["LIMIT_CANDIDATES","CREATE"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["不足一套NO_MATCH","仅一种组合ONLY_ONE_OPTION","不补模型"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"候选只有一套不足一套及未知角色不自动补齐","gap":null},
+    {"id":"M07","category":"缺汤","request":"三人随机一道菜一汤","actions":["REMOVE_SOUP_FIXTURE","CREATE"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["汤不足NO_MATCH","不以主食或未知角色替汤"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"候选只有一套不足一套及未知角色不自动补齐","gap":"复用不足场景；显式删除所有汤的新独立轨迹未新增"},
+    {"id":"M08","category":"未知量与份数","request":"按原文准备，未知量暂不确认，仍需要购买","actions":["SHOPPING_PREVIEW","SAVE_PENDING","MOCK_MATCH"],"fixture":"ShoppingDemandPostgresHttpTest.setUp / ProductMatchPostgresHttpTest.setup","expected":["DRAFT/QUANTITY_PENDING","未知成本null","无标准ID不猜商品"],"reuseClass":"ShoppingDemandPostgresHttpTest","reuseMethod":"未知仍可采购草稿且足量已有不伪造原消耗零","gap":"新库544未知用料的逐项质量未评测"},
+    {"id":"M09","category":"点击第二套","request":"选择第二套","actions":["CREATE","SELECT_SECOND","REPLAY_SELECTION"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["仅第二套选定","重放零模型与检索"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"同键在途并发异键忙终态异参数与双选幂等","gap":"第二套完整指导到采购的端到端新轨迹待采样"},
+    {"id":"M10","category":"修订拒绝旧选择","request":"改成两道菜一汤，再点击旧方案","actions":["CREATE","REVISE","SELECT_OLD"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["版本递增","旧选择拒绝","不恢复旧按钮或偷偷重算"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"别名改变硬资格即使事实指纹未变也拒绝选择及失败修订清旧选定","gap":null},
+    {"id":"M11","category":"响应未知同键核对","request":"网络结果未知，使用原requestId核对","actions":["CREATE","READ_ACTION","REPLAY_SAME_INPUT"],"fixture":"MealPlanningPostgresHttpTest.initialize","expected":["先GET","同键不新增模型尝试","不用新UUID自动重跑"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"同键在途并发异键忙终态异参数与双选幂等","gap":"浏览器真实断网/未知响应演练未在本轮执行"},
+    {"id":"M12","category":"刷新与换账号隔离","request":"刷新历史后切换账号读取原餐单和报价","actions":["CONTEXT_REBUILD","GET_HISTORY","OTHER_USER_GET"],"fixture":"MealPlanningPostgresHttpTest / ProductMatchPostgresHttpTest","expected":["本账号固定版本回看","他人404","GET零模型与Provider"],"reuseClass":"MealPlanningPostgresHttpTest","reuseMethod":"所有读写越权拒绝及事实变化撤权历史保护","gap":"浏览器刷新/账号切换本轮不重跑，真人历史证据单列"}
+  ]
+}

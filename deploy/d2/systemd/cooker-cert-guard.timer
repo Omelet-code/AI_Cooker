@@ -1,0 +1,11 @@
+[Unit]
+Description=Cooker每小时证书检查
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=120
+Persistent=true
+Unit=cooker-cert-guard.service
+
+[Install]
+WantedBy=timers.target

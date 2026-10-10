@@ -22,6 +22,7 @@ public final class ModelGatewayException extends RuntimeException {
         RATE_LIMITED,
         PROVIDER_UNAVAILABLE,
         TIMEOUT,
+        EVALUATION_STOPPED,
         INVALID_RESPONSE
     }
 }

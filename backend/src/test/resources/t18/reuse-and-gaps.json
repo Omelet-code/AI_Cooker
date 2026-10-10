@@ -1,0 +1,21 @@
+{
+  "schemaVersion":1,
+  "evidencePolicy":"下列为可复用代码定位；本轮执行结果从t18-a/nonpaid-baseline.log核实，历史报告数字不累计。",
+  "reuse":[
+    {"class":"MealPlanningPostgresHttpTest","layer":"真实HTTP/Service/隔离PG，外部替身","covers":"人数、随机与语义U2/T5、数量/角色、候选不足、选择、版本、并发、权限、回滚"},
+    {"class":"MealGuidancePostgresHttpTest","layer":"真实HTTP/Service/隔离PG，LLM替身","covers":"完整所选依据、一次指导、引用、数值拒绝、复用、权限、事务/期限"},
+    {"class":"ShoppingDemandPostgresHttpTest","layer":"真实HTTP/Service/隔离PG，零模型","covers":"原材料确认、未知、数量合并、版本/指纹、事务、权限"},
+    {"class":"ProductMatchPostgresHttpTest","layer":"真实HTTP/Service/隔离PG，本地Mock商品","covers":"明确ID、合包、旧价快照、未知量价、城市、Provider幂等与权限"},
+    {"class":"RecipeSearchPostgresTest","layer":"生产RecipeSearchService.search/隔离PG，QueryEmbedding替身","covers":"资格、中文词法与向量融合、去重、权限；不是新库真实排名成绩"},
+    {"class":"MealGuideEvidencePostgresHttpTest","layer":"完整证据去重与64000指导输入档位","covers":"全事实保留、不截断、RESOURCE_LIMIT与旧档位兼容"}
+  ],
+  "gaps":[
+    {"id":"G01","status":"PENDING_USER_REVIEW","detail":"20条问句gold均null，新库ID和source依据未追加只读获取；不得用旧ID或当前排名填写"},
+    {"id":"G02","status":"NOT_EXECUTED","detail":"12场景是固定规划与专项复用表，不等于新增12条端到端集成实测"},
+    {"id":"G03","status":"PENDING_T18_B_AUTHORIZATION","detail":"新库真实query/LLM采样、用户指导评分及供应商usage未知项待另批"},
+    {"id":"G04","status":"INSUFFICIENT_SAMPLES","detail":"真实同类成功样本为0，不能以替身或历史T6补齐30例并报告p95"},
+    {"id":"G05","status":"NOT_EXECUTED","detail":"真实浏览器断网、重复请求增量、跨整餐到采购单轨迹及冷暖分层本轮不采样"},
+    {"id":"G06","status":"UNKNOWN","detail":"现有semantic queryEmbeddingRequests可为null；网关方法尝试不等于真实HTTP或账单，需后续受控观测"},
+    {"id":"G07","status":"PENDING_REVIEW","detail":"候选池gold与完整相关集合须分别声明；质量阈值须在结果揭晓前冻结"}
+  ]
+}

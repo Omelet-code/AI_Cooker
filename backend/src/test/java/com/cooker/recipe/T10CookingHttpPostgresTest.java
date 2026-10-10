@@ -44,9 +44,9 @@ class T10CookingHttpPostgresTest {
     @Autowired JdbcTemplate jdbc;
 
     @Test void 完成事件幂等并发与历史汇总均经真实HTTP() throws Exception {
-        // 整合T13/T14与U1后完整生产迁移为V1～V10，按数字顺序精确核验。
+        // 整合T13/T14与U1后完整生产迁移为V1～V12，按数字顺序精确核验。
         assertThat(jdbc.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
-                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         Browser a = new Browser(); Browser b = new Browser(); Browser anon = new Browser();
         assertThat(anon.get("/users/me/cooked-recipes").statusCode()).isEqualTo(401);
         assertThat(error(anon.postRaw(body("1001", UUID.randomUUID().toString(), null), false), 403)).isEqualTo("CSRF_INVALID");

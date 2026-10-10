@@ -64,9 +64,9 @@ class LlmCredentialHttpPostgresTest {
     @Autowired LlmCredentialService credentials;
 
     @Test void 当前用户凭证接口密文隔离覆盖删除及错误输入均经真实HTTP(CapturedOutput output) throws Exception {
-        // HTTP回归加载完整整合基线，V6→V7专项由迁移测试单独覆盖。
+        // HTTP回归加载当前完整V1～V15整合基线，V6→V7专项仍由迁移测试单独覆盖。
         assertThat(jdbc.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
-                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         Browser anonymous = new Browser();
         assertThat(anonymous.get("/users/me/llm-credential/status").statusCode()).isEqualTo(401);
         assertThat(anonymous.putWithoutCsrf("/users/me/llm-credential", body(FAKE_KEY)).statusCode()).isEqualTo(403);

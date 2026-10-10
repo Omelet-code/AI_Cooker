@@ -88,10 +88,11 @@ class ConversationCompositeForeignKeyPostgresTest {
     }
 
     private static void migrate(PostgreSQLContainer postgres) {
+        // 本专项加载当前完整V1～V15整合基线，精确检查迁移数和成功版本。
         assertThat(Flyway.configure().dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
-                .load().migrate().migrationsExecuted).isEqualTo(10);
+                .load().migrate().migrationsExecuted).isEqualTo(15);
         assertThat(jdbc(postgres).queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
-                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
     }
 
     private static JdbcTemplate jdbc(PostgreSQLContainer postgres) {

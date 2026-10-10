@@ -18,7 +18,7 @@ class ConversationMigrationPostgresTest {
             DockerImageName.parse("cooker-postgres:pg18-zhparser").asCompatibleSubstituteFor("postgres"))
             .withDatabaseName("cooker_t13_v8_migration_test").withUsername("root").withPassword("test-only");
 
-    @Test void 从V7升级V10且保留既有用户和凭证() throws Exception {
+    @Test void 从V7升级V12且保留既有用户和凭证() throws Exception {
         Flyway v7 = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .target(MigrationVersion.fromVersion("7")).load();
         assertThat(v7.migrate().migrationsExecuted).isEqualTo(7);
@@ -31,8 +31,8 @@ class ConversationMigrationPostgresTest {
         }
 
         Flyway upgrade = Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()).load();
-        // 当前完整基线从V7新增V8/V9/V10，不能沿用旧两条迁移的预期。
-        assertThat(upgrade.migrate().migrationsExecuted).isEqualTo(3);
+        // 当前完整基线从V7新增V8/V9/V10/V11/V12/V13/V14，不能沿用旧迁移条数的预期。
+        assertThat(upgrade.migrate().migrationsExecuted).isEqualTo(8);
         try (var connection = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                 var statement = connection.createStatement()) {
             try (var rows = statement.executeQuery("SELECT (SELECT count(*) FROM app_user WHERE username='t13_v7_user'), "
@@ -41,7 +41,7 @@ class ConversationMigrationPostgresTest {
                 rows.next();
                 assertThat(rows.getInt(1)).isEqualTo(1);
                 assertThat(rows.getInt(2)).isEqualTo(1);
-                assertThat(rows.getInt(3)).isEqualTo(10);
+                assertThat(rows.getInt(3)).isEqualTo(15);
             }
             try (var rows = statement.executeQuery("SELECT count(*) FROM information_schema.tables WHERE table_schema='public' "
                     + "AND table_name IN ('conversation','conversation_turn','chat_message')")) {

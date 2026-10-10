@@ -57,9 +57,9 @@ class ConversationHttpPostgresTest {
     @Autowired ConversationTurnService turns;
 
     @Test void 真实HTTP身份边界以及幂等轮次并发与过期恢复() throws Exception {
-        // 会话HTTP回归使用完整V1～V10生产迁移，保留所有原业务断言。
+        // 会话HTTP回归使用当前完整V1～V15整合基线，保留所有原业务断言。
         assertThat(jdbc.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
-                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         Browser anonymous = new Browser();
         assertThat(anonymous.get("/conversations").statusCode()).isEqualTo(401);
         anonymous.csrf();

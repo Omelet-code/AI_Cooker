@@ -44,6 +44,14 @@ class MealMaterialCalculatorTest {
         assertThatThrownBy(() -> MealMaterialCalculator.scale(normal, 1, 0)).isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test void 毫升大小写兼容与大单位不会重复乘千() {
+        var ml = item(1, 1L, "UNREVIEWED", "5", "5", "ML", "mL", false);
+        assertThat(MealMaterialCalculator.scale(ml, 2, 4).referenceAmount()).isEqualByComparingTo("10");
+        assertThat(MealMaterialCalculator.scale(ml, 2, 4).original()).isSameAs(ml);
+        var grams = item(2, 1L, "UNREVIEWED", "1000", "1000", "G", "g", false);
+        assertThat(MealMaterialCalculator.scale(grams, 2, 4).referenceAmount()).isEqualByComparingTo("2000");
+        assertThat(MealMaterialCalculator.scale(item(3, 1L, "UNREVIEWED", "1000", "1000", "G", "kg", false), 2, 4).referenceAmount()).isNull();
+    }
     @Test void 汇总只合并确认标准同单位同可选标记且保留全部来源() {
         var first = facts(1, List.of(item(11, 7L, "REVIEWED", "1", "1", "G", "g", false),
                 item(12, 7L, "REVIEWED", "1", "1", "G", "g", true),

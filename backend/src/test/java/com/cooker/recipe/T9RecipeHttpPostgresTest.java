@@ -44,9 +44,9 @@ class T9RecipeHttpPostgresTest {
     @Autowired JdbcTemplate jdbc;
 
     @Test void 列表详情权限与并发收藏全部经真实HTTP() throws Exception {
-        // 整合T13/T14与U1后完整生产迁移为V1～V10，按数字顺序精确核验。
+        // 整合T13/T14与U1后完整生产迁移为V1～V12，按数字顺序精确核验。
         assertThat(jdbc.queryForList("SELECT version::integer FROM flyway_schema_history WHERE success ORDER BY version::integer",
-                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+                Integer.class)).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
         Browser a = new Browser(); Browser b = new Browser(); Browser anonymous = new Browser();
         assertThat(anonymous.get("/recipes").statusCode()).isEqualTo(401);
         String aId = a.registerAndLogin("t9_alice", "test-password-alice");

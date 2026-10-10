@@ -1,0 +1,16 @@
+package com.cooker.shopping;
+
+import static org.assertj.core.api.Assertions.*;
+import com.cooker.shopping.dto.ShoppingRequest;
+import com.cooker.shopping.service.ShoppingJson;
+import com.fasterxml.jackson.databind.node.*;
+import java.util.*;
+import org.junit.jupiter.api.Test;
+
+class ShoppingRequestTest {
+    private ObjectNode body(){var root=ShoppingJson.JSON.createObjectNode();root.put("requestId","12345678-1234-1234-1234-123456789abc");root.put("conversationId","1");root.put("mealId","2");root.put("expectedVersion",1);root.put("optionId","3");root.put("sourceFingerprint","a".repeat(64));for(String key:List.of("10:101","20:201")){var item=root.withArray("confirmations").addObject();item.put("lineKey",key);item.put("availability","NEED_BUY");item.put("confirmedAmount","10.00000000");item.put("confirmedUnitCode","G");}return root;}
+    @Test void 确认顺序与普通数量格式的幂等摘要相同(){var original=body();var changed=original.deepCopy();var list=(ArrayNode)changed.path("confirmations");var last=list.remove(1);((ObjectNode)last).put("confirmedAmount","10.0");list.insert(0,last);assertThat(ShoppingJson.hash(ShoppingRequest.parse(changed.toString()))).isEqualTo(ShoppingJson.hash(ShoppingRequest.parse(original.toString())));}
+    @Test void 请求类型重复键尾随与外部价格事实一律拒绝(){for(String raw:List.of("","null","[]",body()+"{}",body().toString().replace("\"requestId\":","\"requestId\":\"重复\",\"requestId\":")))assertThatThrownBy(()->ShoppingRequest.parse(raw)).isInstanceOf(com.cooker.common.ApiException.class);for(String field:List.of("userId","price","recipes","url","lock")){var bad=body();bad.put(field,"外部字段");assertThatThrownBy(()->ShoppingRequest.parse(bad.toString())).isInstanceOf(com.cooker.common.ApiException.class);}}
+    @Test void 数量JSON数字科学计数特殊值负数零超量和单位缺一拒绝(){for(String value:List.of("0","-1","NaN","Infinity","1e1","1.000000001","1000000001")){var bad=body();((ObjectNode)bad.path("confirmations").get(0)).put("confirmedAmount",value);assertThatThrownBy(()->ShoppingRequest.parse(bad.toString())).isInstanceOf(com.cooker.common.ApiException.class);}var numeric=body();((ObjectNode)numeric.path("confirmations").get(0)).put("confirmedAmount",10);assertThatThrownBy(()->ShoppingRequest.parse(numeric.toString())).isInstanceOf(com.cooker.common.ApiException.class);var missing=body();((ObjectNode)missing.path("confirmations").get(0)).remove("confirmedUnitCode");assertThatThrownBy(()->ShoppingRequest.parse(missing.toString())).isInstanceOf(com.cooker.common.ApiException.class);}
+    @Test void ID版本和UUID严格且数量上界允许(){var limit=body();((ObjectNode)limit.path("confirmations").get(0)).put("confirmedAmount","1000000000.00000000");assertThat(ShoppingRequest.parse(limit.toString()).confirmations().getFirst().confirmedAmount()).isEqualByComparingTo("1000000000");var id=body();id.put("conversationId",1);assertThatThrownBy(()->ShoppingRequest.parse(id.toString())).isInstanceOf(com.cooker.common.ApiException.class);var version=body();version.put("expectedVersion",1.0);assertThatThrownBy(()->ShoppingRequest.parse(version.toString())).isInstanceOf(com.cooker.common.ApiException.class);var uuid=body();uuid.put("requestId","1-1-1-1-1");assertThatThrownBy(()->ShoppingRequest.parse(uuid.toString())).isInstanceOf(com.cooker.common.ApiException.class);}
+}
