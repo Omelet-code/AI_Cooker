@@ -33,5 +33,8 @@ tmp/
 temp/
 *.tmp
 
+# 临时复审探针（保留本地，不纳入发布版本）
+docs/review-probes/
+
 # 数据目录
 .data/
