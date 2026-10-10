@@ -3,6 +3,10 @@ spring:
     activate:
       on-profile: local
 
+cooker:
+  identity:
+    secure-cookie: ${COOKER_SECURE_COOKIE:false}
+
 logging:
   level:
     root: INFO

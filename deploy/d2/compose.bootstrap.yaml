@@ -1,0 +1,17 @@
+name: ${RELEASE_PROJECT:?必须指定独立项目}-acme
+services:
+  challenge:
+    image: ${WEB_IMAGE:?必须指定已核对Web镜像}
+    mem_limit: 128m
+    cpus: 0.25
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?必须指定规范入口地址}
+      NGINX_ENVSUBST_FILTER: '^DOMAIN$'
+    ports: ['${HTTP_BIND:-0.0.0.0}:80:80']
+    volumes:
+      - './nginx/bootstrap.conf.template:/etc/nginx/templates/default.conf.template:ro'
+      - '${ACME_WEBROOT:?必须指定挑战目录}:/var/www/acme:ro'
+    logging:
+      driver: json-file
+      options: {max-size: '10m', max-file: '3'}

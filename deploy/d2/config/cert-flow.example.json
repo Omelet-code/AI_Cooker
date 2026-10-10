@@ -1,0 +1,10 @@
+{
+  "project": "cooker-public",
+  "release": "/srv/cooker/release",
+  "envFile": "/etc/cooker/production.env",
+  "host": "填写真实公网IP或域名",
+  "certName": "cooker-public",
+  "lineage": "/etc/letsencrypt/live/cooker-public",
+  "tlsDirectory": "/srv/cooker/tls",
+  "alertFile": "/var/log/cooker-cert-alert.jsonl"
+}

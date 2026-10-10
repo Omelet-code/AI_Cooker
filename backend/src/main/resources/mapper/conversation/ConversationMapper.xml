@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.conversation.mapper.ConversationMapper">
+  <resultMap id="ConversationViewMap" type="com.cooker.conversation.vo.ConversationView">
+    <constructor>
+      <idArg column="id" javaType="java.lang.String"/>
+      <arg column="title" javaType="java.lang.String"/>
+      <arg column="created_at" javaType="java.time.OffsetDateTime"/>
+      <arg column="updated_at" javaType="java.time.OffsetDateTime"/>
+    </constructor>
+  </resultMap>
+  <select id="lockOwned" resultType="com.cooker.conversation.entity.ConversationEntity">
+    SELECT id, user_id AS userId, title, next_turn_no AS nextTurnNo, created_at AS createdAt, updated_at AS updatedAt
+    FROM conversation WHERE id = #{id} AND user_id = #{userId} FOR UPDATE
+  </select>
+  <select id="listOwned" resultMap="ConversationViewMap">
+    SELECT id::text AS id, title, created_at, updated_at FROM conversation
+    WHERE user_id = #{userId} ORDER BY updated_at DESC, id DESC LIMIT #{size} OFFSET #{offset}
+  </select>
+  <select id="countOwned" resultType="long">SELECT count(*) FROM conversation WHERE user_id = #{userId}</select>
+  <select id="findOwned" resultMap="ConversationViewMap">
+    SELECT id::text AS id, title, created_at, updated_at FROM conversation WHERE id = #{id} AND user_id = #{userId}
+  </select>
+  <update id="advanceTurn">
+    UPDATE conversation SET next_turn_no = next_turn_no + 1, updated_at = clock_timestamp()
+    WHERE id = #{id} AND user_id = #{userId} AND next_turn_no = #{turnNo} AND next_turn_no &lt; 9223372036854775807
+  </update>
+  <update id="touch">UPDATE conversation SET updated_at=clock_timestamp() WHERE id=#{id} AND user_id=#{userId}</update>
+</mapper>

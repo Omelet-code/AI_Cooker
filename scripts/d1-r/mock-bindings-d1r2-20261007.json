@@ -1,0 +1,20 @@
+{
+  "database": "cooker_rebuild_d1r2_20261007",
+  "parserRule": "d1-r2-parser-v3",
+  "catalogVersion": "mock-d1r2-20261007-v1",
+  "reviewBasis": "D1-R2任务卡明确12项语义；逐项核对最终库规范名、相关原菜谱材料和原商品包装；不推断同义词或密度，配置未激活",
+  "bindings": [
+    {"productId":"mock-shrimp-194","canonicalName":"鲜虾","oldId":194,"firstRebuildId":138,"finalId":138,"sourceKey":"aquatic/黄油煎虾/黄油煎虾.md","rawLine":"鲜虾 300g"},
+    {"productId":"mock-butter-195","canonicalName":"黄油","oldId":195,"firstRebuildId":105,"finalId":105,"sourceKey":"aquatic/黄油煎虾/黄油煎虾.md","rawLine":"黄油 7g"},
+    {"productId":"mock-soy-10","canonicalName":"生抽","oldId":10,"firstRebuildId":10,"finalId":10,"sourceKey":"aquatic/小龙虾/小龙虾.md","rawLine":"生抽 = 30 毫升"},
+    {"productId":"mock-oyster-11","canonicalName":"蚝油","oldId":11,"firstRebuildId":11,"finalId":11,"sourceKey":"aquatic/白灼虾/白灼虾.md","rawLine":"蚝油 10 ml"},
+    {"productId":"mock-darksoy-12","canonicalName":"老抽","oldId":12,"firstRebuildId":12,"finalId":12,"sourceKey":"aquatic/肉蟹煲.md","rawLine":"老抽 5 ml"},
+    {"productId":"mock-oil-70","canonicalName":"食用油","oldId":70,"firstRebuildId":63,"finalId":63,"sourceKey":"aquatic/混合烤鱼/烤鱼.md","rawLine":"食用油 20ml"},
+    {"productId":"mock-salt-59","canonicalName":"盐","oldId":59,"firstRebuildId":35,"finalId":35,"sourceKey":"aquatic/小龙虾/小龙虾.md","rawLine":"盐 = 10 克"},
+    {"productId":"mock-sugar-60","canonicalName":"糖","oldId":60,"firstRebuildId":56,"finalId":56,"sourceKey":"aquatic/水煮鱼.md","rawLine":"糖 2g"},
+    {"productId":"mock-celery-578","canonicalName":"芹菜","oldId":578,"firstRebuildId":456,"finalId":432,"sourceKey":"meat_dish/小炒黄牛肉/小炒黄牛肉.md","rawLine":"芹菜 200g"},
+    {"productId":"mock-sesame-645","canonicalName":"香油","oldId":645,"firstRebuildId":512,"finalId":486,"sourceKey":"meat_dish/香菇滑鸡/香菇滑鸡.md","rawLine":"香油 5ml"},
+    {"productId":"mock-tomato-830","canonicalName":"西红柿","oldId":830,"firstRebuildId":643,"finalId":614,"sourceKey":"soup/西红柿鸡蛋汤.md","rawLine":"西红柿 1 个"},
+    {"productId":"mock-egg-4","canonicalName":"鸡蛋","oldId":4,"firstRebuildId":4,"finalId":4,"sourceKey":"aquatic/蛏抱蛋/蛏抱蛋.md","rawLine":"鸡蛋 2 个"}
+  ]
+}

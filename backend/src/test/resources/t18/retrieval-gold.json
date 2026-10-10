@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "t18-new-snapshot-queries-v1",
+  "snapshotEvidenceRef": null,
+  "annotationStatus": "PENDING_USER_REVIEW",
+  "instructions": "先由用户按问句和硬条件独立审定新快照相关菜谱，再核对source身份、名称和新库ID；不得看当前排名生成gold。无新库ID依据保持null；全部20条当前均未审定。",
+  "queries": [
+    {"id":"Q01","query":"番茄炒蛋","category":"菜名","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q02","query":"红烧肉","category":"菜名","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q03","query":"蒜蓉蒸生蚝","category":"菜名","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q04","query":"土豆和牛肉的菜","category":"食材","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q05","query":"鸡蛋能做什么家常菜","category":"食材","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q06","query":"茄子适合怎么做","category":"食材","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q07","query":"清淡的蔬菜菜肴","category":"软偏好","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q08","query":"酸甜口味的菜","category":"软偏好","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q09","query":"微辣的下饭菜","category":"软偏好","conditions":{},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q10","query":"蘑菇汤","category":"汤角色","conditions":{"categoryCodes":["soup"]},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q11","query":"十五分钟以内的鸡蛋菜","category":"已知时间","conditions":{"maxCookingMinutes":15,"includeUnknownCookingTime":false},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q12","query":"半小时以内的牛肉菜","category":"已知时间","conditions":{"maxCookingMinutes":30,"includeUnknownCookingTime":false},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q13","query":"只用炒锅做土豆","category":"厨具","conditions":{"availableToolNames":["炒锅"]},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q14","query":"只用电饭煲做饭","category":"厨具","conditions":{"availableToolNames":["电饭煲"]},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q15","query":"番茄菜不要鸡蛋","category":"排除食材","conditions":{"excludedIngredientNames":["鸡蛋"]},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q16","query":"家常菜不要花生","category":"排除食材","conditions":{"excludedIngredientNames":["花生"]},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q17","query":"香菇素菜不要猪肉且二十分钟内","category":"组合条件","conditions":{"excludedIngredientNames":["猪肉"],"maxCookingMinutes":20,"includeUnknownCookingTime":false},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q18","query":"完全不用厨具的番茄菜","category":"空厨具","conditions":{"availableToolNames":[]},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q19","query":"牛肉菜一分钟内做好","category":"潜在无结果","conditions":{"maxCookingMinutes":1,"includeUnknownCookingTime":false},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null},
+    {"id":"Q20","query":"使用不存在的星际量子烤箱做菜","category":"潜在无结果","conditions":{"availableToolNames":["星际量子烤箱"]},"goldStatus":"PENDING","goldScope":null,"goldRecipeIds":null,"sourceReferences":[],"reviewer":null}
+  ]
+}

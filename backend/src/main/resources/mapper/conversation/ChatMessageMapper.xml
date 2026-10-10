@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.conversation.mapper.ChatMessageMapper">
+  <resultMap id="MessageViewMap" type="com.cooker.conversation.vo.ChatMessageView">
+    <constructor>
+      <idArg column="id" javaType="java.lang.String"/><arg column="turn_id" javaType="java.lang.String"/>
+      <arg column="role" javaType="com.cooker.conversation.vo.MessageRole"/><arg column="content" javaType="java.lang.String"/>
+      <arg column="sequence" javaType="long"/><arg column="created_at" javaType="java.time.OffsetDateTime"/>
+    </constructor>
+  </resultMap>
+  <select id="listOwned" resultMap="MessageViewMap">
+    SELECT id::text AS id, turn_id::text AS turn_id, role, content, sequence, created_at
+    FROM chat_message WHERE user_id=#{userId} AND conversation_id=#{conversationId}
+    ORDER BY sequence ASC, id ASC LIMIT #{size} OFFSET #{offset}
+  </select>
+  <select id="countOwned" resultType="long">SELECT count(*) FROM chat_message WHERE user_id=#{userId} AND conversation_id=#{conversationId}</select>
+  <select id="userContent" resultType="string">SELECT content FROM chat_message WHERE turn_id=#{turnId} AND role='USER'</select>
+  <insert id="insertMessage">
+    INSERT INTO chat_message(conversation_id,user_id,turn_id,role,content,sequence)
+    VALUES(#{conversationId},#{userId},#{turnId},#{role},#{content},#{sequence})
+  </insert>
+</mapper>

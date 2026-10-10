@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.shopping.mapper.ShoppingMapper">
+    <!-- 先串行化同一用户UUID，再读取旧结果；哈希碰撞只增加等待，不代替唯一约束。 -->
+    <select id="lockRequest" resultType="java.lang.Integer">
+        SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtextextended(CAST(#{user} AS text)||':'||#{request},0))) AS held
+    </select>
+    <select id="request" resultType="com.cooker.shopping.entity.ShoppingList">
+        SELECT * FROM shopping_list WHERE user_id=#{user} AND request_id=CAST(#{request} AS uuid)
+    </select>
+    <select id="get" resultType="com.cooker.shopping.entity.ShoppingList">
+        SELECT * FROM shopping_list WHERE user_id=#{user} AND id=#{id}
+    </select>
+    <select id="insert" resultType="java.lang.Long" affectData="true" flushCache="true">
+        INSERT INTO shopping_list(user_id,conversation_id,meal_id,version,option_id,request_id,input_hash,source_fingerprint,
+            status,budget_yuan,budget_status,estimated_demand_cost,consumption_cost,purchase_outlay,unknown_item_count,evidence_json,view_json)
+        VALUES(#{row.userId},#{row.conversationId},#{row.mealId},#{row.version},#{row.optionId},CAST(#{row.requestId} AS uuid),
+            #{row.inputHash},#{row.sourceFingerprint},#{row.status},#{row.budgetYuan},#{row.budgetStatus},
+            #{row.estimatedDemandCost},#{row.consumptionCost},#{row.purchaseOutlay},#{row.unknownItemCount},CAST(#{row.evidenceJson} AS jsonb),CAST(#{row.viewJson} AS jsonb))
+        ON CONFLICT(user_id,request_id) DO NOTHING RETURNING id
+    </select>
+    <insert id="item">
+        INSERT INTO shopping_list_item(list_id,user_id,line_order,item_key,ingredient_id,unit_code,unit_label,optional,required_amount,shortage_amount,status)
+        VALUES(#{list},#{user},#{order},#{item.itemKey},CAST(#{item.ingredientId} AS bigint),#{item.unitCode},#{item.unitLabel},#{item.optional},
+            CAST(#{item.requiredAmount} AS numeric),CAST(#{item.shortageAmount} AS numeric),#{item.status})
+    </insert>
+    <update id="view">
+        UPDATE shopping_list SET view_json=CAST(#{view} AS jsonb) WHERE user_id=#{user} AND id=#{id}
+    </update>
+</mapper>

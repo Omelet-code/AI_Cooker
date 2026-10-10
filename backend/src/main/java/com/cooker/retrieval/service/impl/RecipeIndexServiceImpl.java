@@ -31,16 +31,26 @@ public class RecipeIndexServiceImpl implements RecipeIndexService {
     private final RecipeSearchDocumentMapper documentMapper;
     private final EmbeddingModel documentEmbeddingModel;
     private final RetrievalIndexProperties properties;
+    private final IndexRunControl control;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public RecipeIndexServiceImpl(RecipeIndexProjectionService projectionService,
             RecipeSearchDocumentBuilder documentBuilder, RecipeSearchDocumentMapper documentMapper,
             @Qualifier("documentEmbeddingModel") EmbeddingModel documentEmbeddingModel,
             RetrievalIndexProperties properties) {
+        this(projectionService, documentBuilder, documentMapper, documentEmbeddingModel, properties, IndexRunControl.NONE);
+    }
+
+    /** 仅独立显式入口传入运行保护，保持既有Spring装配与查询契约。 */
+    public RecipeIndexServiceImpl(RecipeIndexProjectionService projectionService,
+            RecipeSearchDocumentBuilder documentBuilder, RecipeSearchDocumentMapper documentMapper,
+            EmbeddingModel documentEmbeddingModel, RetrievalIndexProperties properties, IndexRunControl control) {
         this.projectionService = projectionService;
         this.documentBuilder = documentBuilder;
         this.documentMapper = documentMapper;
         this.documentEmbeddingModel = documentEmbeddingModel;
         this.properties = properties;
+        this.control = control;
     }
 
     /** 遍历全部结构化菜谱逐个重建；单道菜谱失败不会中断其余菜谱。 */
@@ -68,6 +78,7 @@ public class RecipeIndexServiceImpl implements RecipeIndexService {
      */
     private RecipeIndexOutcome rebuildRecipe(RecipeIndexProjection projection) {
         List<RecipeSearchDocumentChunk> chunks = documentBuilder.build(projection);
+        control.checkRecipe(chunks);
         Map<String, RecipeSearchDocumentEntity> existing = existingByKey(projection.recipeId());
         List<RecipeSearchDocumentChunk> pending = new ArrayList<>();
         for (RecipeSearchDocumentChunk chunk : chunks) {
@@ -84,8 +95,10 @@ public class RecipeIndexServiceImpl implements RecipeIndexService {
         for (int offset = 0; offset < pending.size(); offset += properties.getBatchSize()) {
             List<RecipeSearchDocumentChunk> batch = pending.subList(offset,
                     Math.min(offset + properties.getBatchSize(), pending.size()));
+            control.prepareBatch(batch);
+            List<float[]> vectors;
             try {
-                List<float[]> vectors = documentEmbeddingModel.embed(batch.stream()
+                vectors = documentEmbeddingModel.embed(batch.stream()
                         .map(RecipeSearchDocumentChunk::content).toList());
                 if (vectors.size() != batch.size()) {
                     throw new EmbeddingProviderException("EmbeddingModel 返回的向量数量与输入不一致");
@@ -95,18 +108,31 @@ public class RecipeIndexServiceImpl implements RecipeIndexService {
                     if (vector == null || vector.length != properties.getEmbeddingDimension()) {
                         throw new EmbeddingProviderException("EmbeddingModel 返回的向量维度与配置不一致");
                     }
-                    documentMapper.upsertReady(toEntity(batch.get(index)), vectorLiteral(vector));
-                    indexed++;
                 }
+            } catch (IndexRunStoppedException ex) {
+                if (ex.sent()) for (RecipeSearchDocumentChunk chunk : batch) documentMapper.upsertFailed(toEntity(chunk), ex.getMessage());
+                throw ex;
             } catch (RuntimeException ex) {
                 String failureMessage = failureMessage(ex);
                 for (RecipeSearchDocumentChunk chunk : batch) {
                     documentMapper.upsertFailed(toEntity(chunk), failureMessage);
                     failed++;
                 }
+                if (ex instanceof EmbeddingProviderException provider && provider.kind().global()) throw provider;
+                continue;
+            }
+            try {
+                // 全批向量先校验，再写库；写失败不能清空此前成功行或默默重新收费生成。
+                for (int index = 0; index < batch.size(); index++) {
+                    documentMapper.upsertReady(toEntity(batch.get(index)), vectorLiteral(vectors.get(index)));
+                    indexed++;
+                }
+            } catch (RuntimeException ex) {
+                control.writeFailed();
+                throw ex;
             }
         }
-        if (failed == 0) {
+        if (failed == 0 && control.allowCleanup()) {
             // 仅整道菜谱的所有新块都可用后删除过期块，避免一次失败使可检索文本无故缩减。
             documentMapper.deleteChunksNotIn(projection.recipeId(), chunks.stream().map(RecipeSearchDocumentChunk::key).toList());
         }

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.shopping.mapper.ProductMatchMapper">
+    <select id="lockList" resultType="java.lang.Long">SELECT id FROM shopping_list WHERE user_id=#{user} AND id=#{list} FOR UPDATE</select>
+    <select id="request" resultType="com.cooker.shopping.entity.ProductMatchRow">SELECT * FROM shopping_product_match WHERE user_id=#{user} AND request_id=CAST(#{request} AS uuid)</select>
+    <select id="get" resultType="com.cooker.shopping.entity.ProductMatchRow">SELECT * FROM shopping_product_match WHERE user_id=#{user} AND list_id=#{list} AND id=#{id}</select>
+    <select id="latest" resultType="com.cooker.shopping.entity.ProductMatchRow">SELECT * FROM shopping_product_match WHERE user_id=#{user} AND list_id=#{list} ORDER BY id DESC LIMIT 1</select>
+    <select id="insert" resultType="java.lang.Long" affectData="true" flushCache="true">
+        INSERT INTO shopping_product_match(user_id,list_id,request_id,input_hash,source_fingerprint,city_code,catalog_version,matching_status,
+            estimated_demand_cost,consumption_cost,purchase_outlay,known_subtotal,unknown_item_count,estimated_known_subtotal,estimated_unknown_item_count,budget_status,view_json)
+        VALUES(#{row.userId},#{row.listId},CAST(#{row.requestId} AS uuid),#{row.inputHash},#{row.sourceFingerprint},#{row.cityCode},#{row.catalogVersion},#{row.matchingStatus},
+            CAST(#{costs.estimatedDemandCost} AS numeric),CAST(#{costs.consumptionCost} AS numeric),CAST(#{costs.purchaseOutlay} AS numeric),CAST(#{costs.knownSubtotal} AS numeric),#{costs.unknownItemCount},CAST(#{costs.estimatedKnownSubtotal} AS numeric),#{costs.estimatedUnknownItemCount},#{costs.budgetStatus},CAST(#{row.viewJson} AS jsonb))
+        ON CONFLICT(user_id,request_id) DO NOTHING RETURNING id
+    </select>
+    <insert id="item">
+        INSERT INTO shopping_product_match_item(match_id,user_id,list_id,line_order,item_key,ingredient_id,unit_code,required_amount,shortage_amount,status,
+            product_id,package_amount,package_unit,package_price,package_count,consumption_cost,purchase_outlay,estimated_demand_cost,quote_json)
+        VALUES(#{id},#{user},#{list},#{order},#{line.itemKey},CAST(#{line.ingredientId} AS bigint),#{line.unitCode},CAST(#{line.requiredAmount} AS numeric),CAST(#{line.shortageAmount} AS numeric),#{line.status},
+            #{line.product.productId},CAST(#{line.product.packageAmount} AS numeric),#{line.product.packageUnit},CAST(#{line.product.packagePrice} AS numeric),CAST(#{line.packageCount} AS numeric),CAST(#{line.consumptionCost} AS numeric),CAST(#{line.purchaseOutlay} AS numeric),CAST(#{line.estimatedDemandCost} AS numeric),CAST(#{line.product, typeHandler=com.cooker.shopping.mapper.ProductQuoteJsonTypeHandler} AS jsonb))
+    </insert>
+    <insert id="group">
+        INSERT INTO shopping_product_purchase_group(match_id,user_id,list_id,group_key,product_id,unit_code,quantity,package_count,purchase_outlay)
+        VALUES(#{id},#{user},#{list},#{group.groupKey},#{group.product.productId},#{group.unitCode},CAST(#{group.quantity} AS numeric),CAST(#{group.packageCount} AS numeric),CAST(#{group.purchaseOutlay} AS numeric))
+    </insert>
+    <update id="view">UPDATE shopping_product_match SET view_json=CAST(#{view} AS jsonb) WHERE id=#{id} AND user_id=#{user}</update>
+</mapper>

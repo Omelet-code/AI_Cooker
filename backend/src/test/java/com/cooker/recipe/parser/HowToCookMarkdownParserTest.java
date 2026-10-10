@@ -46,7 +46,9 @@ class HowToCookMarkdownParserTest {
         ParsedRecipe range = parser.parse(readFixture("range-amount.md"), "home/range-amount.md");
         assertEquals("10", range.ingredients().getFirst().amountMin().toPlainString());
         assertEquals("15", range.ingredients().getFirst().amountMax().toPlainString());
+        // 新人数策略完整解析范围后取下限，材料范围上下限保持不变。
         assertEquals(3, range.servings());
+        assertTrue(range.warnings().stream().anyMatch(w -> w.contains("人数依据=RANGE_MIN_AS_BASELINE")));
 
         ParsedRecipe optional = parser.parse(readFixture("optional-ingredient.md"), "home/optional-ingredient.md");
         assertTrue(optional.ingredients().getFirst().optional());

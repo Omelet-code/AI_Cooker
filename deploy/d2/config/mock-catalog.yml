@@ -1,0 +1,19 @@
+# 仅为最终库准备，不自动激活；商品量价虚构，响应仍为MOCK/realData=false/purchaseUrl=null。
+# 保留原12商品标识、价格、包装和城市，只将ingredient-id明确绑定最终库已核验行。
+cooker:
+  shopping:
+    mock:
+      catalog-version: mock-d1r2-20261007-v1
+      products:
+        - { product-id: mock-shrimp-194, ingredient-id: 138, name: "Mock鲜虾300g", city-codes: ["110000", "310000"], available: true, package-amount: "300", package-unit: G, package-price: "18.00", currency: CNY, reference-unit-price: "0.05", reference-unit: G }
+        - { product-id: mock-butter-195, ingredient-id: 105, name: "Mock黄油100g", city-codes: ["110000", "310000"], available: true, package-amount: "100", package-unit: G, package-price: "10.00", currency: CNY, reference-unit-price: "0.08", reference-unit: G }
+        - { product-id: mock-soy-10, ingredient-id: 10, name: "Mock生抽500ml", city-codes: ["110000", "310000"], available: true, package-amount: "500", package-unit: ML, package-price: "10.00", currency: CNY, reference-unit-price: "0.018", reference-unit: ML }
+        - { product-id: mock-oyster-11, ingredient-id: 11, name: "Mock蚝油250ml", city-codes: ["110000"], available: true, package-amount: "250", package-unit: ML, package-price: "8.00", currency: CNY }
+        - { product-id: mock-darksoy-12, ingredient-id: 12, name: "Mock老抽500ml", city-codes: ["110000", "310000"], available: true, package-amount: "500", package-unit: ML, package-price: "10.00", currency: CNY }
+        - { product-id: mock-oil-70, ingredient-id: 63, name: "Mock食用油1000ml", city-codes: ["110000", "310000"], available: true, package-amount: "1000", package-unit: ML, package-price: "15.00", currency: CNY }
+        - { product-id: mock-salt-59, ingredient-id: 35, name: "Mock盐100g", city-codes: ["110000", "310000"], available: true, package-amount: "100", package-unit: G, package-price: "2.00", currency: CNY }
+        - { product-id: mock-sugar-60, ingredient-id: 56, name: "Mock糖100g", city-codes: ["110000", "310000"], available: true, package-amount: "100", package-unit: G, package-price: "3.00", currency: CNY }
+        - { product-id: mock-celery-578, ingredient-id: 432, name: "Mock芹菜500g", city-codes: ["110000", "310000"], available: true, package-amount: "500", package-unit: G, package-price: "5.00", currency: CNY }
+        - { product-id: mock-sesame-645, ingredient-id: 486, name: "Mock香油100ml", city-codes: ["110000", "310000"], available: true, package-amount: "100", package-unit: ML, package-price: "5.00", currency: CNY }
+        - { product-id: mock-tomato-830, ingredient-id: 614, name: "Mock西红柿2个", city-codes: ["110000", "310000"], available: true, package-amount: "2", package-unit: COUNT, package-price: "4.00", currency: CNY }
+        - { product-id: mock-egg-4, ingredient-id: 4, name: "Mock鸡蛋6个", city-codes: ["110000"], available: true, package-amount: "6", package-unit: COUNT, package-price: "6.00", currency: CNY }

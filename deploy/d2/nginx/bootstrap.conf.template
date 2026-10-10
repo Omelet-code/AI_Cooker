@@ -1,0 +1,13 @@
+# 首次证书签发前只提供HTTP-01，不开放HTTP注册/登录/业务入口。
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN};
+    server_tokens off;
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/acme;
+        default_type text/plain;
+        try_files $uri =404;
+    }
+    location / { return 503; }
+}

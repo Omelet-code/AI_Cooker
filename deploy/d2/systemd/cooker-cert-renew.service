@@ -1,0 +1,12 @@
+[Unit]
+Description=Cooker IP证书续期（实际安装另批）
+OnFailure=cooker-cert-alert@%n.service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+UMask=0077
+# 部署时同步实际发布路径和cert-name，仅选一套续期调度。
+ExecStart=/snap/bin/certbot renew --cert-name cooker-public --quiet --deploy-hook "/usr/bin/python3 /srv/cooker/release/deploy/scripts/certificates.py publish --config /etc/cooker/cert-flow.json"
+TimeoutStartSec=300

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.recipe.mapper.RecipeCookingMapper">
+    <resultMap id="record" type="com.cooker.recipe.dto.CookingRecordRow">
+        <id property="id" column="id"/>
+        <result property="recipeId" column="recipe_id"/>
+        <result property="rating" column="rating"/>
+        <result property="cookedAt" column="cooked_at"/>
+    </resultMap>
+    <resultMap id="history" type="com.cooker.recipe.dto.CookedRecipeRow">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="categoryCode" column="category_code"/>
+        <result property="summary" column="summary"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="estimatedMinutes" column="estimated_minutes"/>
+        <result property="isFavorite" column="is_favorite"/>
+        <result property="cookCount" column="cook_count"/>
+        <result property="lastCookedAt" column="last_cooked_at"/>
+        <result property="latestRating" column="latest_rating"/>
+    </resultMap>
+    <!-- 冲突由唯一索引裁决；DO NOTHING 不会令 PostgreSQL 事务进入失败状态。 -->
+    <insert id="insertIgnore">
+        INSERT INTO recipe_cook_record(user_id, recipe_id, idempotency_key, rating)
+        VALUES (#{userId}, #{recipeId}, CAST(#{key} AS uuid), #{rating})
+        ON CONFLICT (user_id, idempotency_key) DO NOTHING
+    </insert>
+    <select id="findByKey" resultMap="record">
+        SELECT id, recipe_id, rating, cooked_at
+        FROM recipe_cook_record
+        WHERE user_id = #{userId} AND idempotency_key = CAST(#{key} AS uuid)
+    </select>
+    <sql id="visible">
+        ((s.source_type = 'SYSTEM_HOWTOCOOK' AND s.visibility = 'PUBLIC' AND s.owner_user_id IS NULL)
+         OR (s.source_type = 'USER_CUSTOM' AND s.visibility = 'PRIVATE' AND s.owner_user_id = #{userId}))
+    </sql>
+    <select id="countCookedRecipes" resultType="long">
+        SELECT count(DISTINCT c.recipe_id)
+        FROM recipe_cook_record c
+        JOIN recipe r ON r.id = c.recipe_id
+        JOIN recipe_source s ON s.id = r.source_id
+        WHERE c.user_id = #{userId} AND <include refid="visible"/>
+    </select>
+    <select id="listCookedRecipes" resultMap="history">
+        WITH summary AS (
+            SELECT c.recipe_id, count(*) AS cook_count, max(c.cooked_at) AS last_cooked_at
+            FROM recipe_cook_record c
+            WHERE c.user_id = #{userId}
+            GROUP BY c.recipe_id
+        )
+        SELECT r.id, r.name, r.category_code, r.summary, r.difficulty, r.estimated_minutes,
+               (f.recipe_id IS NOT NULL) AS is_favorite,
+               h.cook_count, h.last_cooked_at, rated.rating AS latest_rating
+        FROM summary h
+        JOIN recipe r ON r.id = h.recipe_id
+        JOIN recipe_source s ON s.id = r.source_id
+        LEFT JOIN favorite_recipe f ON f.recipe_id = r.id AND f.user_id = #{userId}
+        LEFT JOIN LATERAL (
+            SELECT c.rating FROM recipe_cook_record c
+            WHERE c.user_id = #{userId} AND c.recipe_id = h.recipe_id AND c.rating IS NOT NULL
+            ORDER BY c.cooked_at DESC, c.id DESC LIMIT 1
+        ) rated ON true
+        WHERE <include refid="visible"/>
+        ORDER BY h.last_cooked_at DESC, r.id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+</mapper>

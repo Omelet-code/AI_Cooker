@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cooker.recipe.mapper.RecipeFavoriteMapper">
+    <!-- 唯一约束在数据库中裁定并发；重放收藏不产生第二行，也不改动原收藏时间。 -->
+    <insert id="insertIgnore">
+        INSERT INTO favorite_recipe(user_id, recipe_id)
+        VALUES (#{userId}, #{recipeId})
+        ON CONFLICT (user_id, recipe_id) DO NOTHING
+    </insert>
+    <delete id="deleteFavorite">
+        DELETE FROM favorite_recipe
+        WHERE user_id = #{userId} AND recipe_id = #{recipeId}
+    </delete>
+</mapper>

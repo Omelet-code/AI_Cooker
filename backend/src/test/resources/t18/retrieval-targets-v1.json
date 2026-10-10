@@ -1,0 +1,463 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "t18-selected-targets-v1",
+  "annotationStatus": "FROZEN_PARTIAL_TARGETS",
+  "approvedBy": "USER",
+  "approvedOn": "2026-10-09",
+  "approvalEvidence": "用户在填写人工标注表后，明确认可主架构提出的示例目标、Q18不计分、Q20单独验收口径。",
+  "snapshotEvidence": {
+    "database": "cooker_rebuild_d1r2_20261007",
+    "observedAt": "2026-10-09T13:03:16.779664+08:00",
+    "recipeCount": 372,
+    "catalogRef": ".data/t18-review-20261009/public-recipe-catalog.json",
+    "catalogDocumentRef": "docs/T18-人工标注-新库菜谱目录.md",
+    "knownAtMostOneMinuteCount": 0,
+    "note": "沿用此前公开只读目录，不是本轮重新查库或同事务全库快照；执行前需只读复核身份和硬条件，漂移停报，不改标签适应排名，不做哈希专项。"
+  },
+  "metricPolicy": {
+    "allowed": [
+      "SELECTED_TARGET_HIT_AT_5",
+      "SELECTED_TARGET_HIT_AT_10",
+      "SELECTED_TARGET_MRR_TRUNCATED",
+      "EMPTY_RESULT_CASE_CHECK"
+    ],
+    "forbidden": [
+      "FULL_CORPUS_RECALL",
+      "FULL_CORPUS_PRECISION",
+      "OVERALL_RELEVANCE_ACCURACY"
+    ],
+    "positiveQueryDenominator": 17,
+    "emptyResultQueryDenominator": 1,
+    "excludedQueryCount": 2,
+    "totalQueryCount": 20,
+    "note": "未标注结果不等于不相关。目标集合不是完整相关集合，也不是已审完的候选池。旧汇总器POOL/COMPLETE语义不可直接代用；非收费适配通过前不要据此产生正式统计。"
+  },
+  "queries": [
+    {
+      "id": "Q01",
+      "query": "番茄炒蛋",
+      "category": "菜名",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "358"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "358",
+          "name": "西红柿炒鸡蛋",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "vegetable_dish/西红柿炒鸡蛋.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q02",
+      "query": "红烧肉",
+      "category": "菜名",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "139",
+        "154",
+        "172",
+        "173"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "139",
+          "name": "徽派红烧肉",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "meat_dish/徽派红烧肉/徽派红烧肉.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        },
+        {
+          "recipeId": "154",
+          "name": "湖南家常红烧肉",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "meat_dish/湖南家常红烧肉/湖南家常红烧肉.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        },
+        {
+          "recipeId": "172",
+          "name": "南派红烧肉",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "meat_dish/红烧肉/南派红烧肉.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        },
+        {
+          "recipeId": "173",
+          "name": "简易红烧肉",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "meat_dish/红烧肉/简易红烧肉.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q03",
+      "query": "蒜蓉蒸生蚝",
+      "category": "菜名",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "9"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "9",
+          "name": "清蒸生蚝",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "aquatic/清蒸生蚝.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ],
+      "annotationNote": "清蒸生蚝原文操作步骤3将蒜末放到生蚝上，因此并非仅生蚝食材命中；保留用户原注释作为历史，冻结依据作此更正。"
+    },
+    {
+      "id": "Q04",
+      "query": "土豆和牛肉的菜",
+      "category": "食材",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "190"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "190",
+          "name": "西红柿土豆炖牛肉",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "meat_dish/西红柿土豆炖牛肉/西红柿土豆炖牛肉.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q05",
+      "query": "鸡蛋能做什么家常菜",
+      "category": "食材",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "178"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "178",
+          "name": "肉饼炖蛋",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "meat_dish/肉饼炖蛋.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q06",
+      "query": "茄子适合怎么做",
+      "category": "食材",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "208"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "208",
+          "name": "鱼香茄子",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "meat_dish/鱼香茄子/鱼香茄子.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q07",
+      "query": "清淡的蔬菜菜肴",
+      "category": "软偏好",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "312"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "312",
+          "name": "凉拌油麦菜",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "vegetable_dish/凉拌油麦菜.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q08",
+      "query": "酸甜口味的菜",
+      "category": "软偏好",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "341"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "341",
+          "name": "糖拌西红柿",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "vegetable_dish/糖拌西红柿/糖拌西红柿.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q09",
+      "query": "微辣的下饭菜",
+      "category": "软偏好",
+      "conditions": {},
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "209"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "209",
+          "name": "麻婆豆腐",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "meat_dish/麻婆豆腐/麻婆豆腐.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q10",
+      "query": "蘑菇汤",
+      "category": "汤角色",
+      "conditions": {
+        "categoryCodes": [
+          "soup"
+        ]
+      },
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "227"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "227",
+          "name": "奶油蘑菇汤",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "soup/奶油蘑菇汤.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q11",
+      "query": "十五分钟以内的鸡蛋菜",
+      "category": "已知时间",
+      "conditions": {
+        "maxCookingMinutes": 15,
+        "includeUnknownCookingTime": false
+      },
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "244"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "244",
+          "name": "西红柿鸡蛋汤",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "soup/西红柿鸡蛋汤.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q12",
+      "query": "半小时以内的牛肉菜",
+      "category": "已知时间",
+      "conditions": {
+        "maxCookingMinutes": 30,
+        "includeUnknownCookingTime": false
+      },
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "264"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "264",
+          "name": "日式肥牛丼饭",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "staple/日式肥牛丼饭/日式肥牛丼饭.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q13",
+      "query": "只用炒锅做土豆",
+      "category": "厨具",
+      "conditions": {
+        "availableToolNames": [
+          "炒锅"
+        ]
+      },
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "318"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "318",
+          "name": "印度土豆花菜",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "vegetable_dish/印度土豆花菜.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q14",
+      "query": "只用电饭煲做饭",
+      "category": "厨具",
+      "conditions": {
+        "availableToolNames": [
+          "电饭煲"
+        ]
+      },
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "282"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "282",
+          "name": "电饭煲三文鱼炊饭",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "staple/电饭煲三文鱼炊饭/电饭煲三文鱼炊饭.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q15",
+      "query": "番茄菜不要鸡蛋",
+      "category": "排除食材",
+      "conditions": {
+        "excludedIngredientNames": [
+          "鸡蛋"
+        ]
+      },
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "286"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "286",
+          "name": "红芸豆拌饭",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "staple/红芸豆拌饭.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q16",
+      "query": "家常菜不要花生",
+      "category": "排除食材",
+      "conditions": {
+        "excludedIngredientNames": [
+          "花生"
+        ]
+      },
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "321"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "321",
+          "name": "家常日本豆腐",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "vegetable_dish/家常日本豆腐.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q17",
+      "query": "香菇素菜不要猪肉且二十分钟内",
+      "category": "组合条件",
+      "conditions": {
+        "excludedIngredientNames": [
+          "猪肉"
+        ],
+        "maxCookingMinutes": 20,
+        "includeUnknownCookingTime": false
+      },
+      "scoringMode": "SELECTED_TARGET",
+      "targetRecipeIds": [
+        "356"
+      ],
+      "targetReferences": [
+        {
+          "recipeId": "356",
+          "name": "蚝油三鲜菇",
+          "sourceType": "SYSTEM_HOWTOCOOK",
+          "sourceKey": "vegetable_dish/蚝油三鲜菇/蚝油三鲜菇.md",
+          "sourceVersion": "1.6.0-a0b14bd"
+        }
+      ]
+    },
+    {
+      "id": "Q18",
+      "query": "完全不用厨具的番茄菜",
+      "category": "空厨具",
+      "conditions": {
+        "availableToolNames": []
+      },
+      "scoringMode": "EXCLUDED",
+      "targetRecipeIds": null,
+      "targetReferences": [],
+      "annotationNote": "用户未确定，gold未知而非空；未记录必需厨具不能证明完全不用厨具，不混入17正例或1空结果分母。"
+    },
+    {
+      "id": "Q19",
+      "query": "牛肉菜一分钟内做好",
+      "category": "潜在无结果",
+      "conditions": {
+        "maxCookingMinutes": 1,
+        "includeUnknownCookingTime": false
+      },
+      "scoringMode": "EMPTY_RESULT",
+      "targetRecipeIds": [],
+      "targetReferences": [],
+      "annotationNote": "仅依据当前目录已知estimated_minutes<=1的集合为空，未知时间排除；不声称现实中不存在一分钟菜。资格与数据执行前只读复核。"
+    },
+    {
+      "id": "Q20",
+      "query": "使用不存在的星际量子烤箱做菜",
+      "category": "潜在无结果",
+      "conditions": {
+        "availableToolNames": [
+          "星际量子烤箱"
+        ]
+      },
+      "scoringMode": "EXCLUDED",
+      "targetRecipeIds": null,
+      "targetReferences": [],
+      "annotationNote": "不作为检索gold；硬条件检查拒绝把普通烤箱偷换为指定厨具，允许在明确说明无法满足后提出替代建议。",
+      "hardConstraintAudit": {
+        "rejectedRecipeIds": [
+          "66"
+        ],
+        "replacementNeedsExplicitDisclosure": true,
+        "note": "戚风蛋糕要求普通烤箱等厨具，不能算满足星际量子烤箱；未知厨具不证明可做，不因代码放行而改gold。幽默风格另做人评，无自动付费。"
+      }
+    }
+  ]
+}
