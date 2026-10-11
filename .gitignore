@@ -38,3 +38,6 @@ docs/review-probes/
 
 # 数据目录
 .data/
+
+# 忽略根目录下的内部开发文档
+/docs/
